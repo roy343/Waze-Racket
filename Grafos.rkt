@@ -257,76 +257,95 @@ Salida: Lista de rutas con peso del grafo
                            total))))
 
 
-;;RETORNA LISTA CON DISTANCIA TOTAL DE CADA RUTA
+#|
+Función que retorna la distancia total de las rutas
+|#
 (define (distanciaRutas rutas)
   (distanciaRutasAux rutas '()))
- 
+
+;Función auxiliar de distancias
 (define (distanciaRutasAux rutas totales)
-  (cond ( (null? rutas)
+  (cond ( (null? rutas);Cuando las rutas son nulas, se retorna la lista con las distancias totales
           totales)
         ( else
-          (distanciaRutasAux (cdr rutas) (append totales (list(distanciaTotal 0 (car rutas))))))))
+          (distanciaRutasAux (cdr rutas) (append totales (list(distanciaTotal 0 (car rutas))))))));En otro caso se realiza la recursión y la distancia del primer elemento de las rutas se concatena a la lista totales
 
-;;RETORNA DISTANCIA TOTAL DE RUTA
+#|
+Función que retorna la distancia total de una ruta
+|#
 (define (distanciaTotal num ruta)
-  (cond ( (null? ruta)
+  (cond ( (null? ruta);Cuando la ruta es nula o recorrida retorna la ruta
           num)
         (else
-         (distanciaTotal (+ num (cadar ruta)) (cdr ruta)))))
+         (distanciaTotal (+ num (cadar ruta)) (cdr ruta))))); Genera la distancia total al recorrer la ruta
 
-;;RETORNA EL ID DE LA MENOR LISTA
+#|
+Función que retorna el id de la menor lista
+|#
 (define (menorLista lista)
   (menorListaAux lista (car lista) 0))
 
+;Función auxiliar de la lista
 (define (menorListaAux lista num cont)
-  (cond ( (null? lista)
+  (cond ( (null? lista);Cuando se termina de recorrer 
           cont)
         (else
          (cond ( (<= num (car lista))
-                 (menorListaAux (cdr lista) num cont))
+                 (menorListaAux (cdr lista) num cont)); Si num es menor o igual que el primer elemento de la lista entonces se continua con la lista sin el primer elemento
                (else
-                (menorListaAux (cdr lista) (car lista) (+ cont 1)))))))
+                (menorListaAux (cdr lista) (car lista) (+ cont 1)))))));En otro caso el contador se aumenta 
 
-;;RETORNA RUTA MAS CORTA
+#|
+Función que retorna la ruta más corta de una grafo a otro
+|#
 (define (rutaCorta inicio final grafo)
   (rutaCortaAux (buscaPeso inicio final grafo) (buscaSinPeso inicio final grafo)))
 
+;Función auxiliar de ruta corta
 (define (rutaCortaAux rutas rutasSinPeso)
   (cond ( (null? rutas)
-          rutas)
+          rutas);Cuando se terminan de recorrer las rutas la retorna
         ( else
-          (rutaCortaAux2 (menorLista (distanciaRutas rutas)) rutas rutasSinPeso))))
-
+          (rutaCortaAux2 (menorLista (distanciaRutas rutas)) rutas rutasSinPeso))));En otro caso se ejecuta la función auxiliar 2
+;Función auxiliar de ruta corta 2
 (define (rutaCortaAux2 num rutas rutasSinPeso)
-  (cond ( (zero? num)
-          (cons (car rutasSinPeso) (list (distanciaTotal 0 (car rutas)))))
+  (cond ( (zero? num) ;Cuando el num = cero se detiene la recursión
+          (cons (car rutasSinPeso) (list (distanciaTotal 0 (car rutas)))));Y se construye el par del primer elemento de las rutas y la distancia total de estas
         ( else
-          (rutaCortaAux2 (- num 1) (cdr rutas) (cdr rutasSinPeso)))))
+          (rutaCortaAux2 (- num 1) (cdr rutas) (cdr rutasSinPeso)))));En otro caso se reduce el num y se realiza la recursión con las listas de rutas y rutas sin peso sin el primer elemento de cada uno
 
-;;RETORNA TODAS LAS RUTAS DE UN PUNTO A OTRO CON SU PESO TOTAL
+#|
+Función que retorna todas las rutas de un nodo a otro
+|#
 (define (buscaRutasTotales inicio final grafo)
   (ordenar (buscaRutasTotalesAux (buscaSinPeso inicio final grafo) (distanciaRutas (buscaPeso inicio final grafo)) '()) '())
   )
-
+;Función auxiliar de rutas totales
 (define (buscaRutasTotalesAux rutas pesosRuta Final)
   (cond ( (null? rutas)
-          Final)
-        (else
-         (buscaRutasTotalesAux (cdr rutas) (cdr pesosRuta)  (append Final (list (cons (car rutas) (list (car pesosRuta)))))))))
+          Final); Cuando las rutas sean recorridas por completo se retorna el final
+        (else; Se construye la lista Final de rutas totales
+         (buscaRutasTotalesAux (cdr rutas) (cdr pesosRuta)  (append Final (list (cons (car rutas) (list (car pesosRuta))))))))) ;Se realiza la recursión quitando el primer elemento de la lista de rutas y el peso
 
-;;InsertaElementoOrdenado
+
+#|
+Función que inserta elementos ordenados
+|#
 (define (insertarOrden ele lista)
   (cond ( (null? lista)
           (list ele))
-        ( (> (cadr ele) (cadar lista))
+        ( (> (cadr ele) (cadar lista));Compara los elementos a añadir
           (cons (car lista)
-                (insertarOrden ele (cdr lista))))
+                (insertarOrden ele (cdr lista))));accede a los elementos de la lista y realiza la recursión y construccion del par elemento y lista sin el primer elemento
         ( else
-          (cons ele lista))))
+          (cons ele lista))));En otro caso construye los pares con elemento y la lista inicial
 
-;;Genera una lista con las rutas ordenadas
+
+#|
+Función que inserta elementos ordenados
+|#
 (define (ordenar rutas Ordenadas)
   (cond ( (null? rutas)
-          Ordenadas)
+          Ordenadas); Cuando la lista de rutas es recorrida retorna la lista de ordenadas
         ( else
-          (ordenar (cdr rutas) (insertarOrden (car rutas) Ordenadas)))))
+          (ordenar (cdr rutas) (insertarOrden (car rutas) Ordenadas)))));En otr caso, ordena las rutas y realiza la recursión
