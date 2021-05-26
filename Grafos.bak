@@ -1,0 +1,116 @@
+#lang racket
+
+;;Grafo Dinámico
+(define grafo '())
+
+#|
+
+Agrega nodos al grafo
+E: Número de identificación del nodo
+S: Grafo con el nodo añadido
+
+|#
+
+(define (agregarNodo id grafo)
+  (cond ((null? grafo)
+         (list(append (list id) (list grafo)))) ;;Si el grafo está vacío añade el nodo
+        (else
+         (append grafo (list(list id '())))) ;;Si no está vacío agrega el nodo
+         ))
+
+
+;;Indica si un nodo es parte de un camino establecido
+
+(define (miembro? ele lista)
+  (cond ((null? lista)
+         #f)
+        ((equal? ele (car lista))
+         #t)
+        (else
+         (miembro? ele (cdr lista)))))
+
+;Indica los vecinos de un nodo en el grafo
+(define (vecinos ele grafo)
+  (vecinosAux (assoc ele grafo) ele grafo))
+
+(define (vecinosAux result ele grafo)
+  (cond ((equal? result #f)
+         #f)
+        (else
+         (cond ((null? (cdr result))
+                (cdr result))
+               (else
+               (cadr result))))))
+        
+
+
+;;Establece los caminos entre los nodos
+
+(define (agregarCamino idInicio idFinal peso grafo)
+  (agregarCaminoAux idInicio idFinal peso grafo '()))
+
+(define (agregarCaminoAux idInicio idFinal peso grafo grafoFinal)
+  (cond ( (null? grafo) ;;Condición base: Cuando termina de recorrerse finaliza el proceso
+          grafoFinal) ;;retorna el grafoFinal generado
+        ( else
+          (cond ( (equal? idInicio (caar grafo)) ;;valida si está recorriendo el nodo origen del grafo
+                  (agregarCaminoAux idInicio idFinal peso (cdr grafo) ;;recorre nuevamente el grafo sin el primer nodo
+                                    (append grafoFinal ;; grafoFinal en formación concatenado con...
+                                            (list (append (list(caar grafo)) ;;el nodo de origen y...
+                                                          (list (modificarCaminos (list idFinal peso) (cadar grafo)))))))) ;;caminos del nodo y el nuevo camino generado
+                (else
+                 (agregarCaminoAux idInicio idFinal peso (cdr grafo) ;;recorre la función nuevamente ahora sin el primer elemento en el grafo
+                                   (append grafoFinal ;;grafoFinal ahora es la unión del grafo en formación y...
+                                           (list(car grafo))) ;;el primer elemento en el grafo en desintegración.
+                 ))
+            ))
+        ))
+
+
+                                   
+(define (modificarCaminos id lista)
+  (modificarCaminosAux id lista))
+
+(define (modificarCaminosAux id lista)
+  (cond ( (null? lista)
+          (list (append lista id)))
+          (else
+           (append lista (list id)))       
+  ))
+
+;Establece si una ruta sin peso ha llegado al final de manera exitosa
+(define (sol? fin ruta)
+  (equal? fin (car ruta)))
+
+;Establece si una ruta con peso ha llegado al final de manera exitosa
+(define (sol2? fin ruta)
+  (equal? fin (caar ruta)))
+
+
+;Función que indica si un nodo es parte de una ruta con peso
+
+(define (miembro1? ele lista)
+  (cond ((null? lista)
+         #f)
+        ( (equal? (car ele) (caar lista))
+          #t)
+        (else
+         (miembro1? ele (cdr lista)))
+
+        ))
+
+                 
+(define (conectar ruta grafo)
+  conectarAux ruta '() grafo (vecinos (car ruta) grafo))
+
+(define (conectarAux ruta rutaGenerada grafo vecinos)
+  (cond ((null? vecinos) rutaGenerada)
+        (else
+         (cond ((miembro? (car vecinos) ruta)
+                (conectarAux ruta rutaGenerada grafo (cdr vecinos)))
+               (else
+                (conectarAux ruta (append (list (cons (car vecinos) ruta)) rutaGenerada) grafo (cdr vecinos))
+        )))))
+
+
+

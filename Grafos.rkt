@@ -1,16 +1,29 @@
 #lang racket
 
 (provide (all-defined-out))
+#|
+;Creacion del grafo de prueba
+(define grafoPrueba '( (i (a b))
+              (a (i c d))
+              (b (i c d))
+              (c (a b x))
+              (d (a b f))
+              (x (c))
+              (f (d))
+              ))
+|#
 
 
-;;GrafoDinamico
+;Grafo principal, es el dinámico que se crea a medida que se agragan nodos
 (define grafoPrincipal '()
   )
 
-;; Agregar ciudades para grafoDinamico
-;; E: #id ciudad, grafo mixto
-;; S: grafo mixto con la ciudad añadida
-;; R: # ciudad vacío, literales.
+#|
+; Agregar nodos al grafo principal
+; Entrada: id del nodo
+; Salida: grafo creado
+|#
+
 (define (agregarNodo id grafo)
   (cond ( (null? grafo) 
           (list (append (list id) (list grafo)))) ;;si el grafo está vacío, añada la ciudad
@@ -18,69 +31,67 @@
            (append grafo (list (list id '()))));; sino, agregue la ciudad al grafo      
  ))
 
-;; Agregar caminos entre ciudades
+
+
+#|
+Función que agrega rutas entre los nodos
+Entradas: nodo de inicio, nodo final, peso del camino
+Salida: Grafo con rutas y pesos respectivos
+|#
+
 (define (agregarRuta inicio final peso grafo)
   (agregarRutasAux inicio final peso grafo '()))
 
 (define (agregarRutasAux inicio final peso grafo Final)
-  (cond ( (null? grafo) ;;Condición base: Cuando ya se terminó de recorrer el grafo, finalice
-          Final) ;;retorne el nuevo grafo generado 'grafoFinal'.
+  (cond ( (null? grafo) ;Cuando se termina de recorrer se detiene la función auxiliar
+          Final) ; Devuelve un grafo Final con ruts incluidas
         ( else
-          (cond ( (equal? inicio (caar grafo)) ;;valida si está recorriendo la ciudad de origen en el grafo
-                  (agregarRutasAux inicio final peso (cdr grafo) ;;recorre la función nuevamente ahora sin el primer elemnto en el grafo
-                                    (append Final ;;grafoFinal ahora es la unión del grafo en formación +
-                                            (list (append (list(caar grafo)) ;;la ciudad de origen +
+          (cond ( (equal? inicio (caar grafo)) ;Se valida si se encuentra en el nodo de origen
+                  (agregarRutasAux inicio final peso (cdr grafo) ;Realiza nuevamente la función ahora sin contar el nodo de origen
+                                    (append Final ;Se le agrega al grafo final lo siguiente...
+                                            (list (append (list(caar grafo)) ; El nodo de origen
                                                           (list (cambiarRutas (list final peso) (cadar grafo)))))))) ;;conexiones de la ciudad incluyendo el nuevo camino
                 (else
-                 (agregarRutasAux inicio final peso (cdr grafo) ;;recorre la función nuevamente ahora sin el primer elemnto en el grafo
-                                   (append Final ;;grafoFinal ahora es la unión del grafo en formación +
-                                           (list(car grafo))) ;;el primer elemento en el grafo en desintegración.
-                 )
-                )
-            )
-          )
-   )
-)
+                 (agregarRutasAux inicio final peso (cdr grafo) ;recorre la función nuevamente ahora sin el primer eleemnto en el grafo
+                                   (append Final ;grafo Final ahora es la unión del grafo en formación y el primer elemento del grafo inicial
+                                           (list(car grafo))) 
+                 ))))
+   ))
 
+#|
+Función que agrega un nodo a la lista de conexiones de un nod
+Entrada: id de nodo 
+Salida: Lista de nodos con conexiones
 
-;; Agrega un nodo a la lista de conexiones de una ciudad
-;; E: id: nodo compuesto por ciudad y peso.
-;; S: lista de nodos conexiones
-;; R: nodos vacíos
+Esta no puede tener nodos vacíos
+
+|#
+
 (define (cambiarRutas id lista)
   (cambiarRutasAux id lista))
 
 (define (cambiarRutasAux id lista)
-  (cond ( (null? lista);;si la lista esta vacía
-          (list (append lista id))) ;;agrege el nodo a la lista
-        ( else ;;sino
-           (append lista (list id)));; una la actual lista de conexiones con el nodo   
+  (cond ( (null? lista);Valida si la lista es vacía 
+          (list (append lista id))) ;Si es vacía agrega el nodo a la lista
+        ( else 
+           (append lista (list id)));En otro caso une la lista actual de coexiones con el nodo deseado 
  ))
 
-#|
-;;Grado precargado de prueba
-(define gg '( (i (a b))
-              (a (i c d))
-              (b (i c d))
-              (c (a x b))
-              (d (a b f))
-              (x (c))
-              (f (d))
-              ))
-|#
 
-;;Indica si una ruta sin peso ha llegado al fin deseado
+
+;Indica si el recorrido de una ruta sin peso fue exitosa
 (define (sol? final ruta)
-  (equal? final (car ruta)))
+  (equal? final (car ruta))); Lo hace validando si el final es igual al primer elemento de la ruta
 
-;;Indica si una ruta con peso ha llegado al fin deseado
+;Indica si el recorrido de una ruta con peso fue exitosa
 (define (sol2? final ruta)
-  (equal? final (caar ruta)))
+  (equal? final (caar ruta)));Al tener peso lo realiza validando el primer elemento del primer elemento de la ruta 
 
-;;Indica los vecinos de un nodo
+;Función que indica los vecinos de un nodo
 (define (vecinos elemento grafo)
        (vecinosAux (assoc elemento grafo) elemento grafo))
 
+;Funcón auxiliar de vecinos
 (define (vecinosAux result elemento grafo)
   (cond ( (equal? result #f)
           #f)
@@ -90,132 +101,157 @@
                 (else
                  (cadr result))))))
 
-;;Me indica si un nodo es parte de una ruta.
+#|
+Función que indica si un nodo es parte de una ruta sin peso.
+|#
 (define (miembro? elemento list)
-  (cond ( (null? list)
+  (cond ( (null? list);Cuando la lista es nula se deja de recorrer
           #f)
-        ( (equal? elemento (car list))
+        ( (equal? elemento (car list));Evalúa si el elemento es igual al primer elemento de la lista
           #t)
         (else
-         (miembro? elemento (cdr list)))))
+         (miembro? elemento (cdr list)))));Si no se cumple lo anterior, realizar recursión con la lista sin el primer elemento
 
-;;Me indica si un nodo es parte de una ruta con peso, SIN considerar el peso.
+
+#|
+Función que indica si un nodo es parte de una ruta con peso.
+|#
 (define (miembro2? elemento list)
   (cond ( (null? list)
           #f)
-        ( (equal? (car elemento) (caar list))
+        ( (equal? (car elemento) (caar list));Evalúa si el elemento es igual al primer elemento del grafo
           #t)
         (else
-         (miembro2? elemento (cdr list)))))
+         (miembro2? elemento (cdr list)))));Si no se cumple lo anterior, realizar recursión con la lista sin el primer elemento
 
-;;Extiende una ruta hacia los nodos vecinos del grafo de prueba sin mostrar el peso de cada movimiento desde el inicio
+
+#|
+Función que conecta el nodo con los nodos vecinos según la ruta establecida
+|#
 (define (conectar ruta grafo)
   (conectarAux ruta '() grafo (vecinos (car ruta) grafo))
   )
-
+;Función auxiliar de la conexión
 (define (conectarAux ruta rutaCreada grafo vecinos)
-  (cond ((null? vecinos) rutaCreada)
+  (cond ((null? vecinos) rutaCreada);Cuando no haya más vecinos retorna la ruta Creadad
         (else
-         (cond ((miembro? (car vecinos) ruta)
+         (cond ((miembro? (car vecinos) ruta) ;verifica si un vecino es parte de la ruta del nodo
                 (conectarAux ruta rutaCreada grafo (cdr vecinos)))
                (else 
-                     (conectarAux ruta (append (list (cons (car vecinos) ruta)) rutaCreada) grafo (cdr vecinos))
+                     (conectarAux ruta (append (list (cons (car vecinos) ruta)) rutaCreada) grafo (cdr vecinos)); se crea una ruta y se continua con la lista de vecinos sin el primer elemento
   )))))
 
-
-;;Extiende una ruta hacia los nodos vecinos sin mostrar el peso de cada movimiento desde el inicio
+#|
+Función que genera una conexión hacia los nodos vecinos sin mostrar el peso
+|#
 (define (conectar2 ruta grafo)
   (conectar2Aux ruta '() grafo (vecinos (car ruta) grafo))
   )
-
+;Función auxiliar de la conexión
 (define (conectar2Aux ruta rutaCreada grafo vecinos)
-  (cond ((null? vecinos) rutaCreada)
+  (cond ((null? vecinos) rutaCreada);Cuando no haya más vecinos retorna la ruta Creadad
         (else
-         (cond ((miembro? (caar vecinos) ruta)
+         (cond ((miembro? (caar vecinos) ruta);verifica si un vecino es parte de la ruta del nodo
                 (conectar2Aux ruta rutaCreada grafo (cdr vecinos)))
                (else 
-                     (conectar2Aux ruta (append (list (cons (caar vecinos) ruta)) rutaCreada) grafo (cdr vecinos))
+                     (conectar2Aux ruta (append (list (cons (caar vecinos) ruta)) rutaCreada) grafo (cdr vecinos));se crea una ruta y se continua con la lista de vecinos sin el primer elemento
   )))))
 
 
-;;Extiende una ruta hacia los nodos vecinos mostrando el peso de cada movimiento desde el inicio
+#|
+Función que genera una conexión hacia los nodos vecinos tomando en cuenta el peso de los caminos
+|#
 (define (conectar3 ruta grafo)
   (conectar3Aux ruta '() grafo (vecinos (caar ruta) grafo))
   )
-
+;Función auxiliar de la conexión
 (define (conectar3Aux ruta rutaCreada grafo vecinos)
-  (cond ((null? vecinos) rutaCreada)
+  (cond ((null? vecinos) rutaCreada);Cuando no haya más vecinos retorna la ruta Creadad
                (else
-                (cond ((miembro2? (car vecinos) ruta)
+                (cond ((miembro2? (car vecinos) ruta);verifica si un vecino es parte de la ruta del nodo y se utiliza miembro2 cporque considera peso
                        (conectar3Aux ruta rutaCreada grafo (cdr vecinos)))
                       (else 
-                       (conectar3Aux ruta (append (list (cons (car vecinos)  ruta)) rutaCreada) grafo (cdr vecinos))
-                       )))))
+                       (conectar3Aux ruta (append (list (cons (car vecinos)  ruta)) rutaCreada) grafo (cdr vecinos)));se crea una ruta y se continua con la lista de vecinos sin el primer elemento
+                       ))))
         
-;; Revierte los elementos de un conjunto de rutas
+#|
+Función que revierte los elementos de una ruta
+|#
 (define (revertir rutasAux rutas)
   (cond ( (null? rutas)
           rutasAux)
         (else
          (revertir 
-                      (append (list (reverse (car rutas))) rutasAux)
+                      (append (list (reverse (car rutas))) rutasAux);Se revierten los elementos de las rutas
                       (cdr rutas)
          ))))
 
-;; buscar todas las rutas para el grafo de prueba gg
+#|
+Función que busca y retorna las rutas del grafo de prueba
+|#
 (define (buscaPrueba inicio final grafo)
   (buscaRutasTotalesAux (list (list inicio)) final grafo '()))
 
+;Función auxiliar de búsqueda
 (define (buscaPruebaAux rutas final grafo total)
   (cond ( (null? rutas)
-          (revertir '() total))
-        ( (sol? final (car rutas))
+          (revertir '() total));Cuando las rutas son nulas, se realiza la función revertir 
+        ( (sol? final (car rutas));Si se llegó al final de manera exitosa se retornan las rutas totales construidas
           (buscaPruebaAux (cdr rutas)
                            final
                            grafo
                            (cons (car rutas) total)))
         ( else
-          (buscaPruebaAux (append (conectar (car rutas) grafo)
+          (buscaPruebaAux (append (conectar (car rutas) grafo);en otro caso sigue realizando la recursión siguiendo con la lista de rutas sin el primer elemento
                                    (cdr rutas))
                            final
                            grafo
                            total))))
 
 
-;;RETORNA LAS RUTAS DE UN PUNTO A OTRO SIN PESO
+#|
+Función que retorna las rutas sin peso de un grafo
+|#
 (define (buscaSinPeso inicio final grafo)
   (buscaSinPesoAux (list (list inicio)) final grafo '()))
 
+;Función auxiliar de búsqueda
 (define (buscaSinPesoAux rutas final grafo total)
   (cond ( (null? rutas)
-          (revertir '() total))
-        ( (sol? final (car rutas))
+          (revertir '() total));Cuando las rutas son nulas, se realiza la función revertir
+        ( (sol? final (car rutas));Si se llegó al final de manera exitosa se retornan las rutas totales construidas
           (buscaSinPesoAux (cdr rutas)
                            final
                            grafo
                            (cons (car rutas) total)))
         ( else
-          (buscaSinPesoAux (append (conectar2 (car rutas) grafo)
+          (buscaSinPesoAux (append (conectar2 (car rutas) grafo);en otro caso sigue realizando la recursión siguiendo con la lista de rutas sin el primer elemento
                                    (cdr rutas))
                            final
                            grafo
                            total))))
 
-;;RETORNA LAS RUTAS ACOMPAÑADOS DE SUS PESOS POR TRASLADO
+
+#|
+Función que retorna las rutas con peso de un grafo
+Entrada: nodo de inicio y nodo de final
+Salida: Lista de rutas con peso del grafo
+|#
 (define (buscaPeso ini fin grafo)
   (buscaPesoAux (list (list (list ini '0))) fin grafo '()))
+;Función auxiliar de búsqueda
 
 (define (buscaPesoAux rutas fin grafo total)
   (cond ( (null? rutas)
-          (revertir '() total))
+          (revertir '() total));Cuando las rutas son nulas, se realiza la función revertir
         ( (sol2? fin (car rutas))
-          (buscaPesoAux (cdr rutas)
+          (buscaPesoAux (cdr rutas);Si se llegó al final de manera exitosa se retornan las rutas totales construidas
                            fin
                            grafo
                            (cons (car rutas) total)))
         ( else
-          (buscaPesoAux (append (conectar3 (car rutas) grafo)
-                                   (cdr rutas))
+          (buscaPesoAux (append (conectar3 (car rutas) grafo);Se utiliza el conectar3 porque toma en cuenta el peso de la ruta
+                                   (cdr rutas));en otro caso sigue realizando la recursión siguiendo con la lista de rutas sin el primer elemento
                            fin
                            grafo
                            total))))
