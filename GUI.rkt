@@ -3,7 +3,7 @@
 (require racket/draw/arrow)
 (require "Grafos.rkt")
 
-;-------------------------------------------Variables-------------------------------------------;
+;Definición de variables del sistema
 
 
 ;GrafoDinamico
@@ -80,13 +80,13 @@
 (define pesos '() )
 
 
-;Pens
+;Defnicion de los pens con su respectivo color
 (define no-pen (make-object pen% "BLACK" 1 'transparent))
 (define no-brush (make-object brush% "BLACK" 'transparent))
-(define one-way-pen (make-object pen% "GAINSBORO" 4 'solid))
-(define arrow-pen (make-object pen% "GAINSBORO" 1 'solid))
-(define two-way-pen (make-object pen% "DIM GRAY" 4 'solid))
-(define black-pen (make-object pen% "BLACK" 2 'solid))
+(define one-way-pen (make-object pen% "LIGHTBLUE" 4 'solid))
+(define arrow-pen (make-object pen% "BLACK" 1 'solid))
+(define two-way-pen (make-object pen% "BLUE" 4 'solid))
+(define negro (make-object pen% "BLACK" 2 'solid))
 (define red-pen (make-object pen% "RED" 4 'solid))
 (define weight-pen (make-object pen% "BLACK" 1 'solid))
 (define white-pen (make-object pen% "SNOW" 1 'solid))
@@ -103,19 +103,19 @@
 (define lightblue-brush (make-object brush% "LIGHTBLUE" 'solid)) ;7
 (define medium-slate-blue-brush (make-object brush% "MEDIUM SLATE BLUE" 'solid)) ;8
 (define plum-brush (make-object brush% "PLUM" 'solid)) ;9
-(define white-brush (make-object brush% "WHITE" 'solid))
+(define blanco (make-object brush% "WHITE" 'solid))
 (define arrow-brush (make-object brush% "GAINSBORO" 'solid))
 (define black-brush (make-object brush% "BLACK" 'solid))
 (define black-hilite-brush (make-object brush% "BLACK" 'hilite))
 
 
-;-------------------------------------------Variables-------------------------------------------;
+;;
 
 
 
 
 
-;----------------------------------------------Grid----------------------------------------------;
+
 
 
 ;Funcion que dibuja las referencias en el canvas para saber donde graficar la ciudad
@@ -123,9 +123,9 @@
   (showGridAux 0 50 800 500)
   )
 
-;Funcion auxiliar que dibuja las referencias en el canvas para saber donde graficar la ciudad
-(define (showGridAux n in-between until-x until-y)
-  (cond ( (and #t (<= until-x n) (<= until-y n) )
+;Funcion auxiliar que dibuja las referencias en el canvas para saber donde graficar el grafo
+(define (showGridAux n limites posX posY)
+  (cond ( (and #t (<= posX n) (<= posY n) )
           #f
          )
         (else
@@ -133,118 +133,98 @@
          (send dc set-brush black-hilite-brush)
          
          ;Se dibujan las lineas
-         (send dc draw-line n 0 n until-y)
-         (send dc draw-line 0 n until-x n)
+         (send dc draw-line n 0 n posY)
+         (send dc draw-line 0 n posX n)
          
-         (showGridAux (+ n in-between) in-between until-x until-y)
-         (cond ( (equal? 0 (modulo n 150))
-                 ;Dibuja los numeros
+         (showGridAux (+ n limites) limites posX posY)
+         (cond ( (equal? 0 (modulo n 100))
+                 ;Dibuja los numeros de las coordenadas
                  (send dc draw-text (number->string n) 0 n)
                  (send dc draw-text (number->string n) n 0)
-                )
-               )
-         )
-    )
-  )
-
-
-;----------------------------------------------Grid----------------------------------------------;
+                )))
+    ))
 
 
 
 
 
-;----------------------------------------Agregar Ciudad----------------------------------------;
 
 
 ;Funcion para agregar una nueva ciudad al mapa
-(define (add-city)
+(define (agregarCiudad)
   ;Se ingresa el texto del field a la varible
-  (set! nuevoNodo (send add-city-text-field get-value))
-  (set! nuevoNodoX (send add-city-x-text-field get-value))
-  (set! nuevoNodoY (send add-city-y-text-field get-value))
+  (set! nuevoNodo (send agregarCiudadText get-value))
+  (set! nuevoNodoX (send agregarCiudadX get-value))
+  (set! nuevoNodoY (send agregarCiudadY get-value))
   
-  (cond ( (equal? #f (check-city nuevoNodo))
-          ;Si se encuentra que la ciudad no puede ser agregada
-          ;Se manda un mensaje de error dentro de la funcion llamada
+  (cond ( (equal? #f (validarCiudad nuevoNodo));Si se encuentra que la ciudad no puede ser agregada se envía un mensaje de error dentro de la funcion llamada
           #f
          )
         (else
 
-         (cond ( (equal? #f (check-city-coords nuevoNodoX nuevoNodoY))
-                 ;Si se encuentra que la ciudad no puede ser agregada
-                 ;Se manda un mensaje de error dentro de la funcion llamada
+         (cond ( (equal? #f (validarCiudadCoords nuevoNodoX nuevoNodoY))
+                 ;Si se encuentra que la ciudad no puede ser agregada se envía un mensaje de error dentro de la funcion llamada
                  #f
                 )
                (else
                        ;Se agrega el nuevo nodo a grafoDinamico
                        (set! mapa (agregarNodo (string->number nuevoNodo) mapa))
                        ;Se agrega el nodo y sus posiciones a coords-list
-                       (set! coordenadas (set-city-position (string->number nuevoNodo)
+                       (set! coordenadas (setPos (string->number nuevoNodo)
                                    (string->number nuevoNodoX)
                                    (string->number nuevoNodoY)))
                        ;Informacion del agergado en instructions-text-field
-                       (send instructions-text-field set-value (string-append "-> Nueva Ciudad: " nuevoNodo
-                                                                       "\n     Pos x: " nuevoNodoX
-                                                                       "\n     Pos y: " nuevoNodoY
+                       (send TextFieldInstrucciones set-value (string-append "-> Nueva Ciudad: " nuevoNodo
+                                                                       "\n     Coordenada X: " nuevoNodoX
+                                                                       "\n     Coordenada Y: " nuevoNodoY
                                                                        ))
                        ;Verifica la cantidad de ciudades actuales en grafo para activar botones y funciones
-                       (check-city-quantity)
+                       (validarCantidad)
                 
-                       ;Refresh al canvas
-                       ;(send map-canvas refresh-now)
-                       ; Wait a second to let the window get ready
-                       ;(sleep/yield 0.1)
-                       ;Redraw grid
-                       ;(draw-grid)
+
                 
                        ;Para graficar todos los nodos en la lista
-                       (draw-all-nodes)
+                       (dibujarNodos)
                        
-                )
-               )
-         )
-        )
-  )
+                )))
+        ))
 
 
 ;Funcion para verificar si la ciudad puede ser agregada al mapa
-(define (check-city city)
-  (check-city-aux city mapa)
+(define (validarCiudad city)
+  (validarCiudadAux city mapa)
   )
 
 ;Funcion auxiliar para verificar si la ciudad puede ser agregada al mapa
-(define (check-city-aux city graph)
+(define (validarCiudadAux city graph)
   ;Verifica que la ciudad ingresada sea una ciudad valida
-  (cond ( (equal? #t (check-city-node city) )
+  (cond ( (equal? #t (validarIdNodo city) )
           ;Verifica que la ciudad ingresada sea una ciudad que no exista ya
-          (cond ( (equal? #t (check-city-existence city graph) )
+          (cond ( (equal? #t (validarExistencia city graph) )
                   #t
                   )
                 (else
-                 (send instructions-text-field set-value
+                 (send TextFieldInstrucciones set-value
                        "-> La ciudad deseada ya se encuentra en al mapa.\n-> Ingrese una ciudad no existente." )
                  #f
                  )
              )
           )
         (else
-         (send instructions-text-field set-value
+         (send TextFieldInstrucciones set-value
                "-> La ciudad deseada no puede ser agregada al mapa.\n-> Ingrese una ciudad entre 0 y 99." )
          #f
-         )
-    )
-  )
+         )))
   
 
 
 ;Funcion para verificar que la ciudad tenga el formato deseado (0 a 99)
-(define (check-city-node city)
-  (check-city-node-aux city 99)
+(define (validarIdNodo city)
+  (ValidarNodoCiudadAux city 99)
   )
 
 ;Funcion auxiliar para verificar que la ciudad tenga el formato deseado (0 a 99)
-(define (check-city-node-aux city n)
+(define (ValidarNodoCiudadAux city n)
   (cond ( (equal? n -1)
           #f
          )
@@ -252,130 +232,118 @@
           #t
          )
         (else
-         (check-city-node-aux city (- n 1))
-         )
-    )
-  )
+         (ValidarNodoCiudadAux city (- n 1))
+         )))
 
 ;Funcion para verificar que el nodo existe en grafoDinamico
-(define (check-city-existence city graph)
+(define (validarExistencia ciudad graph)
   (cond ( (null? graph)
           #t
          )
-        ( (equal? (string->number city) (caar graph) )
+        ( (equal? (string->number ciudad) (caar graph) )
           #f
          )
         (else
-         (check-city-existence city (cdr graph) )
+         (validarExistencia ciudad (cdr graph) )
          )
     )
   )
 
-;Funcion para verificar que las coordenadas sea numeros dentro del canvas
-(define (check-city-coords x y)
-  (check-city-coords-aux x y 773 483)
+;Funcion para verificar definir los límites del canvas para dibujar los nodos
+(define (validarCiudadCoords x y)
+  (validarCiudadCoordsAux x y 773 483)
   )
 
 
 ;Funcion auxiliar para verificar que las coordenadas sea numeros dentro del canvas
-(define (check-city-coords-aux x y dx dy)
-  (cond ( (and #t (check-coord x dx) (check-coord y dy) )
+(define (validarCiudadCoordsAux x y dx dy)
+  (cond ( (and #t (verificarCoordenada x dx) (verificarCoordenada y dy) )
           #t
          )
         (else
-         (send instructions-text-field set-value
+         (send TextFieldInstrucciones set-value
                        "-> Las coordenadas ingresadas no pertenecen dentro\n    del mapa.
--> Ingrese una coordenada en 'x' de 17 hasta 773
-    y una coordenada en 'y' de 17 hasta 483." )
+-> La coordenada 'x' debe ser un valor entre 17 y 773
+    y la coordenada en 'y' entre 17 y 483." )
                  #f
-                 )
-         )
-  )
+                 )))
 
 
 ;Verifica una sola coordenada por separado
-(define (check-coord z dz)
-  (cond ( (equal? 16 dz)
+(define (verificarCoordenada a da)
+  (cond ( (equal? 16 da)
           #f
          )
-        ( (equal? z (number->string dz))
+        ( (equal? a (number->string da))
          #t
          )
         (else
-         (check-coord z (- dz 1))
-         )
-   )
-  )
+         (verificarCoordenada a (- da 1))
+         )))
 
-;Funcion para agregar el nodo con sus respectivas coordenadas a coords-list
+;Funcion para agregar el nodo con sus respectivas coordenadas 
 ;Ya se encuentran verificados los parametros
-(define (set-city-position city x y)
-  (append coordenadas (list (list city x y)) )
+(define (setPos ciudad x y)
+  (append coordenadas (list (list ciudad x y)) )
   )
 
 ;Funcion para verificar la cantidad de nodos agregados
 ;Dependiendo de esto dependen otras funcionalidades del programa
-(define (check-city-quantity)
-  (cond ( (send search-button is-enabled?)
+(define (validarCantidad)
+  (cond ( (send botonBuscar is-enabled?)
           #t
          )
-        ( (and #t (<= 5 (length mapa)) prep)
+        ( (and #t (<= 4 (length mapa)) prep)
           ;Habilita el boton de busqueda y los radio-buttons
-          (send initial-text-field enable #t)
-          (send final-text-field enable #t)
-          (send search-button enable #t)
-          (send rbuttons enable #t)
+          (send textFieldInicial enable #t)
+          (send textFieldFinal enable #t)
+          (send botonBuscar enable #t)
+          (send botonRutas enable #t)
           
          )
         ( (equal? 2 (length mapa))
-          (send add-road-button enable #t)
-         )
-    )
-  )
-
-
-;----------------------------------------Agregar Ciudad----------------------------------------;
+          (send botonAgregarCamino enable #t)
+         )))
 
 
 
 
 
-;----------------------------------------Agregar Camino----------------------------------------;
 
 
 ;Funcion para agregar un camino entre dos ciudades en el mapa
-(define (add-road)
+(define (agregarCamino)
 
   ;Se ingresa el texto del field a la varible
-  (set! inicialNodo (send add-road-initial-text-field get-value))
-  (set! finalNodo (send add-road-final-text-field get-value))
-  (set! pesoNuevo (send add-road-weight-text-field get-value))
+  (set! inicialNodo (send textFieldAgregarCam get-value))
+  (set! finalNodo (send agregarCaminoFinal get-value))
+  (set! pesoNuevo (send agregarPesoCamino get-value))
 
-  (cond ( (equal? #f (check-road inicialNodo finalNodo))
+  (cond ( (equal? #f (verificarCamino inicialNodo finalNodo))
           ;Si se encuentra que los destinos no se encuentran en el mapa
           ;Se manda un mensaje de error dentro de la funcion llamada
           #f
          )
         (else
-         (cond ( (equal? #f (check-same-road inicialNodo finalNodo))
+         (cond ( (equal? #f (mismoCamino inicialNodo finalNodo))
                 ;Si se encuentra que los destinos son iguales
                 ;Se manda un mensaje de error dentro de la funcion llamada
                 #f
                 )
                (else
-                (cond ( (equal? #f (check-weight pesoNuevo))
+                (cond ( (equal? #f (verificarPeso pesoNuevo))
                  ;Si se encuentra que el peso no es adecuado al formato
                  ;Se manda un mensaje de error dentro de la funcion llamada
                  #f
                  )
                (else
-                (cond ( (equal? #f (check-road-existence inicialNodo finalNodo pesoNuevo))
+                (cond ( (equal? #f (verificarExCamino inicialNodo finalNodo pesoNuevo))
                         ;Si se encuentra que el camino se repite
                         ;Se manda un mensaje de confirmacion dentro de la funcion llamada
                         #f
                         )
                       (else
-                       (cond ( (equal? #f (check-road-inverse-existence inicialNodo finalNodo pesoNuevo))
+                       (cond ( (equal? #f (verificarInversoCamino inicialNodo finalNodo pesoNuevo))
                                ;Si se encuentra que la distancia del camino para hacerlo de doble via no es igual a de solo una via
                                ;Se manda un mensaje de confirmacion dentro de la funcion llamada
                                #f
@@ -389,53 +357,43 @@
                               (string->number finalNodo)
                               (string->number pesoNuevo) mapa))
                        ;Guarda el peso es una lista para ser graficado
-                       (save-road-weight (string->number inicialNodo)
+                       (almacenarPeso (string->number inicialNodo)
                                          (string->number finalNodo)
                                          (string->number pesoNuevo))
                        ;Informacion del agergado en instructions-text-field
-                       (send instructions-text-field set-value (string-append "-> Nuevo Camino: "
+                       (send TextFieldInstrucciones set-value (string-append "-> Nuevo Camino: "
                                                                               inicialNodo " -> "
                                                                               finalNodo ".\n"
-                                                                              "     Distancia: " pesoNuevo "."
+                                                                              "     Peso: " pesoNuevo "."
                                                                        ))
                        ;Refresh al canvas
-                       (send map-canvas refresh-now)
-                       ; Wait a second to let the window get ready
-                       ;(sleep/yield 0.1)
-                       ;Redraw del grid
+                       (send canvasMapa refresh-now)
+                       ;Redibuja el grid
                        (showGrid)
                        ;Graficacion de caminos
-                       (draw-all-lines)
+                       (dibujarLineas)
                        ;Se grafican de nuevos los nodos para manener las lineas por debajo
-                       (draw-all-nodes)
+                       (dibujarNodos)
                        ;Se grafican las distancias (pesos)
-                       (draw-all-weights)
+                       (dibujarPesos)
                        ;Se cambia el flag para efectuar busquedas luego del primer camino
                        (cond ( (equal? #f prep)
                                (set! prep #t)
-                               (check-city-quantity)))
-                              )
-                         )
-                       )
-                    )
-                )
-             )
-                )
-         )
-    )
-  )
-  )
+                               (validarCantidad)))
+                              ))))
+                ))))
+    )))
 
 ;Funcion que verifica la validez del camino por agregar
-(define (check-road i-city f-city)
-  (cond ( (equal? #f (check-road-aux i-city mapa) )
+(define (verificarCamino i-city f-city)
+  (cond ( (equal? #f (verificarCaminoAux i-city mapa) )
         ;Cond inicial
-          (send instructions-text-field set-value
+          (send TextFieldInstrucciones set-value
               "-> La ciudad inicial seleccionada no existe.\n-> Ingrese una nueva ciudad." )
           #f )
-        ( (equal? #f (check-road-aux f-city mapa) )
+        ( (equal? #f (verificarCaminoAux f-city mapa) )
         ;Cond final
-          (send instructions-text-field set-value
+          (send TextFieldInstrucciones set-value
               "-> La ciudad final seleccionada no existe.\n-> Ingrese una nueva ciudad." )
           #f )
         (else
@@ -444,7 +402,7 @@
   )
 
 ;Funcion auxiliar que verifica la validez del camino por agregar
-(define (check-road-aux city graph)
+(define (verificarCaminoAux city graph)
   (cond ( (null? graph)
         #f
         )
@@ -452,16 +410,14 @@
           #t
          )
         (else
-         (check-road-aux city (cdr graph) )
-         )
-      )
-  )
+         (verificarCaminoAux city (cdr graph) )
+         )))
 
 ;Fucion para verificar que las rutas no sean iguales
-(define (check-same-road i-city f-city)
+(define (mismoCamino i-city f-city)
   (cond ( (equal? #t (equal? i-city f-city) )
         ;Cond final
-          (send instructions-text-field set-value
+          (send TextFieldInstrucciones set-value
               "-> Las ciudades deben ser diferentes.\n-> Ingrese nuevas ciudades." )
           #f )
         (else
@@ -470,10 +426,10 @@
   )
 
 ;Funcion para verificar que el peso del camino se apegue al formato de estos (1-20)
-(define (check-weight weight)
-  (cond ( (equal? #f (check-weight-aux weight 9) )
+(define (verificarPeso weight)
+  (cond ( (equal? #f (verificarPesoAux weight 9) )
           ;Si el peso esta mal
-          (send instructions-text-field set-value
+          (send TextFieldInstrucciones set-value
               "-> La distancia deseada no se encuentra dentro del rango\n     de 1 y 9.\n-> Ingrese una nueva distancia." )
           #f )
         (else
@@ -484,7 +440,7 @@
 
 
 ;Funcion auxiliar para verificar que el peso del camino se apegue al formato de estos (1-20)
-(define (check-weight-aux weight max)
+(define (verificarPesoAux weight max)
   (cond ( (equal? 0 max)
           #f
          )
@@ -492,7 +448,7 @@
          #t
          )
         (else
-         (check-weight-aux weight (- max 1) )
+         (verificarPesoAux weight (- max 1) )
          )
     )
   )
@@ -500,36 +456,36 @@
 
 ;Funcion para verificar la existencia del camino deseado
 ;Si este existe, se mantiene el camino y se sobreescribe el peso.
-(define (check-road-existence i-city f-city weight)
-  (check-road-existence-aux i-city f-city weight mapa)
+(define (verificarExCamino i-city f-city weight)
+  (verificarExistenciaCamAux i-city f-city weight mapa)
   )
 
 ;Funcion auxiliar para verificar la existencia del camino deseado
-(define (check-road-existence-aux i-city f-city weight graph)
+(define (verificarExistenciaCamAux i-city f-city weight graph)
 
   (cond ( (null? graph)
           #t
          )
         ( (equal? i-city (number->string (caar graph)) )
-               (check-roads-conections-existence i-city f-city (cadar graph) )
+               (verificarConexiones i-city f-city (cadar graph) )
          )
         (else
-         (check-road-existence-aux i-city f-city weight (cdr graph))
+         (verificarExistenciaCamAux i-city f-city weight (cdr graph))
          )
         )
   )
 
 
 ;Funcion para verificar si existe el camino inverso y si el peso es igual
-(define (check-road-inverse-existence i-city f-city weight)
+(define (verificarInversoCamino i-city f-city weight)
 
-  (cond ( (equal? #t (and (equal? #t (check-road-existence i-city f-city weight)) (equal? #t (check-road-existence f-city i-city weight))))
+  (cond ( (equal? #t (and (equal? #t (verificarExCamino i-city f-city weight)) (equal? #t (verificarExCamino f-city i-city weight))))
          ;Si no existe ninguno de los dos caminos
           #t
          )
-        ( (equal? #f (check-road-existence f-city i-city weight))
+        ( (equal? #f (verificarExCamino f-city i-city weight))
           ;Si existe el camino inverso, puede verificarse que el peso sea igual
-         (check-road-inverse-existence-aux i-city f-city weight pesos)
+         (verificarExCaminoInverso i-city f-city weight pesos)
          )
         (else
          ;Si no existe el camino inverso, se grafica normal
@@ -539,10 +495,10 @@
   )
   
 ;Funcion auxiliar para verificar si existe el camino inverso y si el peso es igual
-(define (check-road-inverse-existence-aux i-city f-city weight list)
+(define (verificarExCaminoInverso i-city f-city weight list)
   (cond ( (null? list)
           ;Si el peso no es igual
-          (send instructions-text-field set-value
+          (send TextFieldInstrucciones set-value
               "-> La distancia deseada debe ser igual a la del camino \n     inverso.\n-> Ingrese la distancia correspondiente." )
           #f
          )
@@ -552,49 +508,43 @@
           ;Si el camino inverso existe y el peso es igual
           #t )
         (else
-         (check-road-inverse-existence-aux i-city f-city weight (cdr list))
-         )
-        )
-  )
+         (verificarExCaminoInverso i-city f-city weight (cdr list))
+         )))
 
 ;Funcion auxiliar de la auxiliar para verificar la existencia del camino deseado
 ;Esta se encarga de revisar en las conexiones del nodo deseado
-(define (check-roads-conections-existence i-city f-city conections)
+(define (verificarConexiones i-city f-city conections)
   (cond ( (null? conections)
           #t
          )
         ( (equal? f-city (number->string (caar conections)))
           ;Si el camino ya existe
-          (send instructions-text-field set-value
-              "-> El camino indicado ya existe en el mapa.\n-> Ingrese uno nuevo." )
+          (send TextFieldInstrucciones set-value
+              "-> Este camino  ya existe .\n-> Por favor ingrese uno nuevo." )
           #f
          )
         (else
-         (check-roads-conections-existence i-city f-city (cdr conections))
-         )
-    )
-  )
+         (verificarConexiones i-city f-city (cdr conections))
+         )))
 
 ;Funcion que guarda el nuevo camino para que su peso pueda ser graficado
-(define (save-road-weight i-city f-city weight)
+(define (almacenarPeso i-city f-city weight)
   (set! pesos (append pesos (list (list i-city f-city weight))))
   )
 
 
-;----------------------------------------Agregar Camino----------------------------------------;
 
 
 
 
 
-;------------------------------------Obtencion de Coordenadas------------------------------------;
 
 
 ;Funcion para encontrar la coordenada deseada de un nodo
 ;Parametros:
 ;   nodo: numero de ciudad
 ;   pos: coordenada ("x" o "y")
-(define (get-coord nodo pos)
+(define (getCoord nodo pos)
   (get-coord-aux nodo pos coordenadas)
     )
 
@@ -624,32 +574,28 @@
 )
 
 
-;------------------------------------Obtencion de Coordenadas------------------------------------;
 
 
 
-
-
-;---------------------------------------Graficar Ciudades---------------------------------------;
 
 
 ;Funcion para dibujar todos los nodos al iniciar la aplicacion
 ;Llama a una funcion auxiliar
-(define (draw-all-nodes)
-  (draw-all-nodes-aux coordenadas dc)
+(define (dibujarNodos)
+  (dibujarNodosAux coordenadas dc)
   )
 
 ;Funcion auxiliar para dibujar todos los nodos al iniciar la aplicacion
 ;Parametros:
 ;   list: nodes-list
 ;   dc: Drawing Context
-(define (draw-all-nodes-aux list dc)
+(define (dibujarNodosAux list dc)
   (cond ( (null? (cdr list) )
-              (draw-node dc (caar list) (cadar list) (caddar list) )
+              (dibujarCiudad dc (caar list) (cadar list) (caddar list) )
            )
         (else
-             (draw-node dc (caar list) (cadar list) (caddar list) )
-             (draw-all-nodes-aux (cdr list) dc)
+             (dibujarCiudad dc (caar list) (cadar list) (caddar list) )
+             (dibujarNodosAux (cdr list) dc)
          )
   )
 )
@@ -661,45 +607,45 @@
 ;   node: numero de ciudad
 ;   x: coordenada en x
 ;   y: coordenada en y
-(define (draw-node dc node x y)
+(define (dibujarCiudad dc node x y)
 
   (cond ( (equal? (quotient node 10) 0)
-          (send dc set-brush indian-red-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 1)
-          (send dc set-brush chocolate-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 2)
-          (send dc set-brush salmon-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 3)
-          (send dc set-brush green-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 4)
           (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 5)
-          (send dc set-brush aquamarine-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 6)
-          (send dc set-brush medium-turquoise-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 7)
-          (send dc set-brush lightblue-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 8)
-          (send dc set-brush medium-slate-blue-brush)
+          (send dc set-brush yellow-green-brush)
          )
         ( (equal? (quotient node 10) 9)
-          (send dc set-brush plum-brush)
+          (send dc set-brush yellow-green-brush)
          )
         (else
-         (send dc set-brush white-brush)
+         (send dc set-brush blanco)
          )
     )
 
   ;Dibuja el nodo (circulo)
-  (send dc set-pen black-pen)
+  (send dc set-pen negro)
   (send dc draw-ellipse (- x 15) (- y 15) 30 30)
 
   ;Muestra el respectivo numero dentro del nodo
@@ -718,29 +664,27 @@
 )
 
 
-;---------------------------------------Graficar Ciudades---------------------------------------;
 
 
 
 
-;---------------------------------------Graficar Caminos----------------------------------------;
 
 
 ;Funcion para dibujar todas las lineas (inicio de aplicacion)
-(define (draw-all-lines)
-  (draw-all-lines-aux mapa);CAMBIO
+(define (dibujarLineas)
+  (dibujarLineasAux mapa);CAMBIO
   )
 
 ;Funcion auxiliar para dibujar todas las lineas (inicio de aplicacion)
 ;Parametros:
 ;   graph: graph
-(define (draw-all-lines-aux graph)
+(define (dibujarLineasAux graph)
   (cond ( (null? (cdr graph) )
-          (draw-lines-by-node dc (caar graph) (cadar graph))
+          (dibujarPorNodo dc (caar graph) (cadar graph))
          )
         (else         
-         (draw-lines-by-node dc (caar graph) (cadar graph))
-         (draw-all-lines-aux (cdr graph) ) ;Elimina el primer nodo del grafo
+         (dibujarPorNodo dc (caar graph) (cadar graph))
+         (dibujarLineasAux (cdr graph) ) ;Elimina el primer nodo del grafo
          )
     )
   )
@@ -751,13 +695,13 @@
 ;   dc: Drawing Context
 ;   node: nodo inicial
 ;   connections: lista de nodos que finalizan la linea
-(define (draw-lines-by-node dc node connections)
+(define (dibujarPorNodo dc node connections)
   (cond ( (null? connections )
           #t
          )
         (else
-         (draw-line dc node (caar connections) (check-ways (caar connections) node) )
-         (draw-lines-by-node dc node (cdr connections) )
+         (dibujarLinea dc node (caar connections) (verificarCaminos (caar connections) node) )
+         (dibujarPorNodo dc node (cdr connections) )
          )
     )
   )
@@ -768,23 +712,23 @@
 ;   ini: nodo inicial
 ;   fin: nodo final
 ;   way: cantidad de vias (1 o 2)
-(define (draw-line dc ini fin way)
-  (cond ( (equal? way 1)
+(define (dibujarLinea dc ini fin direccion)
+  (cond ( (equal? direccion 1)
           ;Dibuja solo las flechas de los caminos de una sola via
-          (draw-arrows (+ 0 (get-coord ini "x")) (+ 0 (get-coord ini "y"))
-              (+ 0 (get-coord fin "x")) (+ 0 (get-coord fin "y")) )
+          (dibujarFlechas (+ 0 (getCoord ini "x")) (+ 0 (getCoord ini "y"))
+              (+ 0 (getCoord fin "x")) (+ 0 (getCoord fin "y")) )
           ;Cambia al pen para una via
           (send dc set-pen one-way-pen)
          )
-        ( (equal? way 2)
+        ( (equal? direccion 2)
           ;Cambia al pen para dos vias
           (send dc set-pen two-way-pen)
          )
     )
   ;Manda a dibujar la linea
   (send dc draw-line
-        (+ 0 (get-coord ini "x")) (+ 0 (get-coord ini "y"))
-        (+ 0 (get-coord fin "x")) (+ 0 (get-coord fin "y")) )
+        (+ 0 (getCoord ini "x")) (+ 0 (getCoord ini "y"))
+        (+ 0 (getCoord fin "x")) (+ 0 (getCoord fin "y")) )
         ; + 15 ya que el nodo tiene radio de 30 -> asi la linea queda en el medio
   )
 
@@ -793,29 +737,29 @@
 ;Parametros:
 ;   node: nodo por verificar
 ;   fin: nodo por encontrar camino
-(define (check-ways node fin)
-  (check-ways-aux node fin mapa);CAMBIO
+(define (verificarCaminos node fin)
+  (verificarCaminosAux node fin mapa);CAMBIO
   )
 
 ;Funcion auxiliar para verificar si el camino es one-way o two-way
 ;   node: nodo por verificar
 ;   fin: nodo por encontrar camino
 ;   graph: graph
-(define (check-ways-aux node fin graph)
+(define (verificarCaminosAux node fin graph)
   (cond ( (null? graph)
           1
          )
         ( (equal? node (caar graph))
-          (cond ( (path? fin (cadar graph) )
+          (cond ( (ruta? fin (cadar graph) )
                   2
                  )
                 (else
-                 (check-ways-aux node fin (cdr graph) )
+                 (verificarCaminosAux node fin (cdr graph) )
                  )
                 )
          )
         (else
-         (check-ways-aux node fin (cdr graph) )
+         (verificarCaminosAux node fin (cdr graph) )
          )
   )
   )
@@ -824,7 +768,7 @@
 ;Parametros:
 ;   fin: nodo final que pasa a ser inicial
 ;   connections: lista de nodos que finalizarian la linea
-(define (path? fin connections)
+(define (ruta? fin connections)
   (cond ( (null? connections)
           #f
          )
@@ -832,14 +776,14 @@
           #t
           )
         (else
-         (path? fin (cdr connections) )
+         (ruta? fin (cdr connections) )
          )
     )
  )
 
 
 ;Funcion para dibujar una flecha cerca de la linea
-(define (draw-arrows x1 y1 x2 y2)
+(define (dibujarFlechas x1 y1 x2 y2)
   (send dc set-pen arrow-pen)
   (send dc set-brush arrow-brush)
 
@@ -891,48 +835,44 @@
                  (/ (+ (/ (+ x1 x2) 2) x2) 2)
                  (/ (+ (/ (+ y1 y2) 2) y2) 2)
                  20 20)
-         )
-     )
- )
-
-
-
-;---------------------------------------Graficar Caminos----------------------------------------;
+         )))
 
 
 
 
 
-;----------------------------------------Graficar Pesos----------------------------------------;
+
+
+
 
 
 ;Funcion para graficar el peso del camino entre dos nodos
-(define (draw-all-weights)
-  (draw-all-weights-aux pesos)
+(define (dibujarPesos)
+  (dibujarPesosAux pesos)
   )
 
 ;Funcion auxiliar para graficar el peso del camino entre dos nodos
-(define (draw-all-weights-aux peso-caminos)
-  (cond ( (null? peso-caminos)
+(define (dibujarPesosAux pesoCaminos)
+  (cond ( (null? pesoCaminos)
           #t
          )
         (else
          ;Envia a dibujar el peso actual
-         (draw-weight
-          (+ 0 (get-coord (caar peso-caminos) "x"))
-          (+ 0 (get-coord (caar peso-caminos) "y"))
-          (+ 0 (get-coord (cadar peso-caminos) "x"))
-          (+ 0 (get-coord (cadar peso-caminos) "y"))
-          (caddar peso-caminos) )
+         (dibujarPeso
+          (+ 0 (getCoord (caar pesoCaminos) "x"))
+          (+ 0 (getCoord (caar pesoCaminos) "y"))
+          (+ 0 (getCoord (cadar pesoCaminos) "x"))
+          (+ 0 (getCoord (cadar pesoCaminos) "y"))
+          (caddar pesoCaminos) )
          ;Llama a la funcion nuevamente recursivamente para recorrer toda la lista
-         (draw-all-weights-aux (cdr peso-caminos) )
+         (dibujarPesosAux (cdr pesoCaminos) )
          )
     )
   )
 
 
 ;Funcion para mostrar el peso de la linea cerca de esta
-(define (draw-weight x1 y1 x2 y2 w)
+(define (dibujarPeso x1 y1 x2 y2 w)
   
   (cond ( (equal? #t  (equal? x1 x2) )  ;x1 == x2
           ;Dibuja el texto
@@ -982,38 +922,33 @@
           (send dc draw-text (number->string w)
                 ( + (/ (+ x1 x2) 2) 0)
                 ( + (/ (+ y1 y2) 2) 0)
-                )
-         )
-    )
-
-  )
-
-
-;----------------------------------------Graficar Pesos----------------------------------------;
+                ))
+    ))
 
 
 
 
 
-;---------------------------------------Busqueda de Rutas---------------------------------------;
+
+
 
 
 
 ;Funcion para iniciar la busqueda de los caminos
-(define (begin-search)
+(define (buscar)
   (cond ( (equal? #f (equal? destinoInicio destinoFin))
-      (cond ( (equal? #t (check-fields)) ;Si los campos de texto estan correctos
+      (cond ( (equal? #t (verificarTexto)) ;Si los campos de texto estan correctos
           ;Deshabilita botones
-          (send add-city-button enable #f)
-          (send add-road-button enable #f)
-          (send search-button enable #f)
-          (send rbuttons enable #f)
+          (send botonAgregarCiudad enable #f)
+          (send botonAgregarCamino enable #f)
+          (send botonBuscar enable #f)
+          (send botonRutas enable #f)
           ;Habilita el boton de finalizar la busqueda
-          (send end-search-button enable #t)
+          (send botonFinalizar enable #t)
           ;Se informa en el text-box sobre la busqueda
-          (search-info)
+          (verificarInfo)
           ;Se inicia la busqueda de los caminos dependiendo del estado de seleccion del usuario
-          (search-by-state)
+          (buscarEstado)
          )
         (else
          ;(send information-text-field set-value
@@ -1024,8 +959,8 @@
      )
         (else
          ;Si el destino inicial y final es el mismo
-          (send instructions-text-field set-value
-              "-> Los destinos deben ser diferentes.\n-> Ingrese nuevos destinos." )
+          (send TextFieldInstrucciones set-value
+              "-> Las ciudades destino deben ser diferentes.\n-> Ingrese nuevos destinos." )
          )
         
    )
@@ -1033,18 +968,18 @@
 
 
 ;Funcion para verificar los fields antes de buscar las rutas
-(define (check-fields)
+(define (verificarTexto)
   (cond 
-        ( (equal? #f (check-destiny-field destinoInicio coordenadas) )
+        ( (equal? #f (verificarDestino destinoInicio coordenadas) )
         ;Si el destino inicial no esta en los nodos
-          (send instructions-text-field set-value
+          (send TextFieldInstrucciones set-value
               "-> El destino inicial seleccionado no existe.\n-> Ingrese un nuevo destino." )
           ; Wait a second to let the window get ready
   ;(sleep/yield 0.1)
           #f )
-        ( (equal? #f (check-destiny-field destinoFin coordenadas) )
+        ( (equal? #f (verificarDestino destinoFin coordenadas) )
         ;Si el destino final no esta en los nodos
-          (send instructions-text-field set-value
+          (send TextFieldInstrucciones set-value
               "-> El destino final seleccionado no existe.\n-> Ingrese un nuevo destino." )
           ; Wait a second to let the window get ready
   ;(sleep/yield 0.1)
@@ -1058,20 +993,20 @@
 ;Parametros:
 ;   text: string escrito en text-box
 ;   list: nodes-list
-(define (check-destiny-field destiny list)
+(define (verificarDestino destiny list)
   (cond ( (null? list)
           #f )
         ( (equal? destiny ( number->string (caar list)) )
           #t )
         (else
-         (check-destiny-field destiny (cdr list))
+         (verificarDestino destiny (cdr list))
          )
     )
   )
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;Funcion para cambiar el texto de instructions-text-field al presionar "Search"
-(define (search-info)
+(define (verificarInfo)
   ;Se guarda en un string la seleccion de los radio buttons
 (cond ( (equal? 0 rutaSeleccion)
         (set! busqueda "Ruta más Corta" )
@@ -1082,8 +1017,8 @@
       )
 
   ;Se cambia el texto del text-field
-  (send instructions-text-field set-value (string-append
-                                           "-> Tipo de Busqueda: " busqueda
+  (send TextFieldInstrucciones set-value (string-append
+                                           "-> Busqueda: " busqueda
                                            "\n\n-> Destino Inicial: " destinoInicio
                                            "\n-> Destino Final: " destinoFin )
         )
@@ -1091,24 +1026,24 @@
 
 
 ;Funcion para empezar la busqueda de caminos dependiendo de la seleccion del usuario
-(define (search-by-state)
+(define (buscarEstado)
   (cond ( (equal? 0 rutaSeleccion)
           ;Camino mas corto
-          (shortest-path-search (string->number destinoInicio) (string->number destinoFin) )
+          (buscarCorta (string->number destinoInicio) (string->number destinoFin) )
          )
         ( (equal? 1 rutaSeleccion)
           ;Todos los caminos
-          (all-paths-search (string->number destinoInicio) (string->number destinoFin) )
+          (buscarRutas (string->number destinoInicio) (string->number destinoFin) )
          )
         (else
-         (send instructions-text-field set-value "-> Tipo de Busqueda no seleccionado.")
+         (send TextFieldInstrucciones set-value "-> Tipo de Busqueda no seleccionado.")
          )
     )
   )
 
 
 ;Funcion para graficar el CAMINO MAS CORTO
-(define (shortest-path-search ini fin)
+(define (buscarCorta ini fin)
   ;Se llama a la funcion BuscaCaminos en el archivo de logica
   ;Se guarda la lista con el camino y el peso
   (set! caminoCorto (rutaCorta ini fin mapa) )
@@ -1116,7 +1051,7 @@
   ;Verificar si shortest-path esta vacio
   (cond ( (null? caminoCorto)
           ;Si no se encuentra una ruta
-          (send instructions-text-field set-value "-> No se ha encontrado ninguna ruta.")
+          (send TextFieldInstrucciones set-value "-> No se ha encontrado ninguna ruta.")
          )
         (else
          ;Si se encuentra una ruta
@@ -1125,16 +1060,16 @@
          ;Dibuja el grid
          (showGrid)
          ;Dibuja todas las lineas nuevamente por si hay algun camino en pantalla
-         (draw-all-lines)
+         (dibujarLineas)
          ;Llama a dibujar el camino mas corto
-         (draw-path caminoCorto)
+         (dibujarCamino caminoCorto)
          ;Se dibujan nuevamente los nodos para que camino queda debajo de estos
-         (draw-all-nodes)
+         (dibujarNodos)
          ;Se dibujan nuevamente los pesos
-         (draw-all-weights)
+         (dibujarPesos)
 
          ;Ingresa la informacion del camino al text-field
-         (send information-text-field set-value (string-append "Información de Rutas:\n"
+         (send textFieldInfo set-value (string-append "Información de Rutas:\n"
                                                         "Ruta más corta:\nPeso:"
                                                         (number->string (cadr caminoCorto))))
          )
@@ -1144,7 +1079,7 @@
 
 
 ;Funcion para graficar TODOS LOS CAMINOS
-(define (all-paths-search ini fin)
+(define (buscarRutas ini fin)
   ;Se llama a la funcion BuscaCaminos en el archivo de logica
   ;Se guarda la lista con los caminos y los pesos
   (set! caminosTotales (buscaRutasTotales ini fin mapa) )
@@ -1152,14 +1087,14 @@
   ;Verificar si shortest-path esta vacio
   (cond ( (null? caminosTotales)
           ;Si no se encuentra una ruta
-          (send instructions-text-field set-value "-> No se ha encontrado ninguna ruta.")
+          (send TextFieldInstrucciones set-value "-> No se ha encontrado ninguna ruta.")
          )
         (else
          ;Ingresa las informaciones de los caminos al text-field
-         (set-path-info caminosTotales)
+         (infoCamino caminosTotales)
          
          ;Crea los botones necesarios
-         (set-path-buttons (length caminosTotales) 1)
+         (setCamino (length caminosTotales) 1)
          ;Se guarda una lista con los botones actuales
          (set! botones (send vpanel-buttons get-children) )
   
@@ -1169,13 +1104,13 @@
          ;Dibuja el grid
          (showGrid)
          ;Dibuja todas las lineas nuevamente por si hay algun camino en pantalla
-         (draw-all-lines)
+         (dibujarLineas)
          ;Llama a dibujar el camino mas corto
-         (draw-path (car caminosTotales) )
+         (dibujarCamino (car caminosTotales) )
          ;Se dibujan nuevamente los nodos para que camino queda debajo de estos
-         (draw-all-nodes)
+         (dibujarNodos)
          ;Se dibujan nuevamente los pesos
-         (draw-all-weights)
+         (dibujarPesos)
          )
      )
  )
@@ -1184,22 +1119,22 @@
 ;Funcion para graficar un camino
 ;Parametros:
 ;   list: lista con el camino y el peso
-(define (draw-path list)
-  (draw-path-aux (car list))
+(define (dibujarCamino list)
+  (dibujarCaminoAux (car list))
   )
 
 ;Funcion auxilir para graficar un camino 
 ;Parametros:
 ;   path-list: lista solo con el camino
-(define (draw-path-aux path-list)
-  (cond ( (null? (cddr path-list) )
+(define (dibujarCaminoAux listaCaminos)
+  (cond ( (null? (cddr listaCaminos) )
           ;Grafica una linea entre los ultimos dos nodos
-          (build-path dc (car path-list) (cadr path-list) )
+          (crearCamino dc (car listaCaminos) (cadr listaCaminos) )
          )
         (else
           ;Grafica una linea entre dos nodos
-          (build-path dc (car path-list) (cadr path-list) )
-          (draw-path-aux (cdr path-list) ) ;Elimina el primer nodo de la lista
+          (crearCamino dc (car listaCaminos) (cadr listaCaminos) )
+          (dibujarCaminoAux (cdr listaCaminos) ) ;Elimina el primer nodo de la lista
          )
     )
   )
@@ -1210,44 +1145,44 @@
 ;   ini: nodo inicial
 ;   fin: nodo final
 ;   way: cantidad de vias (1 o 2)
-(define (build-path dc ini fin)
+(define (crearCamino dc ini fin)
   ;Se escoje un pen rojo para trazar el camino
   (send dc set-pen red-pen)
   ;Manda a dibujar la linea
   (send dc draw-line
-        (+ 0 (get-coord ini "x")) (+ 0 (get-coord ini "y"))
-        (+ 0 (get-coord fin "x")) (+ 0 (get-coord fin "y")) )
+        (+ 0 (getCoord ini "x")) (+ 0 (getCoord ini "y"))
+        (+ 0 (getCoord fin "x")) (+ 0 (getCoord fin "y")) )
         ; + 15 ya que el nodo tiene radio de 30 -> asi la linea queda en el medio
 
   )
 
 
 ;Funcion para ingresar la informacion de los caminos
-(define (set-path-info paths-list)
+(define (infoCamino listaCaminos)
   ;Redefine el information-text-field
-  (send information-text-field set-value (string-append "Información de Rutas:\n"
-                                                        (set-path-info-aux paths-list 1) ) )
+  (send textFieldInfo set-value (string-append "Información de Rutas:\n"
+                                                        (infoCaminoAux listaCaminos 1) ) )
   
   )
 
 ;Funcion para ingresar la informacion de los caminos
-(define (set-path-info-aux paths-list n)
+(define (infoCaminoAux listaCaminos n)
   
-  (cond ( (null? paths-list )
+  (cond ( (null? listaCaminos )
           (set! caminos n)
           " "
          )
         (else
 
-         (cond ( (equal? (length paths-list) 1)
+         (cond ( (equal? (length listaCaminos) 1)
                  (string-append "-> Ruta " (number->string n)
-                                ":\n     Distancia: " (number->string (cadar paths-list)) 
-                                (set-path-info-aux (cdr paths-list) (+ 1 n) ) )
+                                ":\n     Distancia: " (number->string (cadar listaCaminos)) 
+                                (infoCaminoAux (cdr listaCaminos) (+ 1 n) ) )
                 )
                (else
                 (string-append "-> Ruta " (number->string n)
-                               ":\n     Distancia: " (number->string (cadar paths-list)) "\n" 
-                               (set-path-info-aux (cdr paths-list) (+ 1 n) ) )
+                               ":\n     Distancia: " (number->string (cadar listaCaminos)) "\n" 
+                               (infoCaminoAux (cdr listaCaminos) (+ 1 n) ) )
                 )
            )
           )
@@ -1256,21 +1191,21 @@
 
 
 ;Funcion para agregar los botones de las rutas
-(define (set-path-buttons total n)
+(define (setCamino total n)
   (cond ( (equal? (+ total 1) n)
           #t)
         (else
          
          (cond ( (> 20 n)
-                 (set-path-buttons-aux total n vpanel-buttons)
+                 (setCaminoAux total n vpanel-buttons)
                  )
                ;Si se sobrepasa de 21 botones
                (else
-                (set-path-buttons-aux total n vpanel-buttons2)
+                (setCaminoAux total n vpanel-buttons2)
                 )
                )
          
-         (set-path-buttons total (+ n 1))
+         (setCamino total (+ n 1))
          
          )
         )
@@ -1278,27 +1213,27 @@
 
 
 ;Funcion auxiliar para agregar los botones de las rutas
-(define (set-path-buttons-aux total n panel)
+(define (setCaminoAux total n panel)
   (cond ( (< (length botones) n )
           ;Boton Ruta N
           (new button% [parent vpanel-buttons] [label (string-append "Ruta " (number->string n) )]
                
                [callback (lambda (button event)
                            ;Dibuja todas las lineas nuevamente por si hay algun camino en pantalla
-                           (draw-all-lines)
+                           (dibujarLineas)
                            
-                           (build-specific-path n caminosTotales)
+                           (crearUnCamino n caminosTotales)
 
                            ;Se dibujan nuevamente los nodos para que camino queda debajo de estos
-                           (draw-all-nodes)
+                           (dibujarNodos)
                            ;Se dibujan nuevamente los pesos
-                           (draw-all-weights)
+                           (dibujarPesos)
                            
                          )])
          )
         (else
 
-         (send (get-button n botones) show #t)
+         (send (getBoton n botones) show #t)
 
          )
         )
@@ -1306,26 +1241,26 @@
 
 
 ;Funcion para obtener el boton necesario n
-(define (get-button n list)
+(define (getBoton n list)
   (cond ( (equal? 1 n)
           (car list)
          )
         (else
-         (get-button (- n 1) (cdr list))
+         (getBoton (- n 1) (cdr list))
          )
    )
   )
 
 
 ;Funcion para eliminar los botones luego de ser utilizados
-(define (delete-actual-buttons list)
+(define (deleteButtons list)
   (cond ( (null? list)
           #t
           )
         (else
          (send (car list) show #f)
 
-         (delete-actual-buttons (cdr list) )
+         (deleteButtons (cdr list) )
          
          )
     )
@@ -1333,18 +1268,18 @@
 
 ;Funcion para graficar una ruta especifica
 ;Usada en los botones dinamicos
-(define (build-specific-path n paths)
+(define (crearUnCamino n paths)
   (cond ( (<= n (length paths))   
           (cond ( (equal? n 1)
-                  (draw-path (car paths))
+                  (dibujarCamino (car paths))
                  )
                 (else
-                 (build-specific-path (- n 1) (cdr paths) )
+                 (crearUnCamino (- n 1) (cdr paths) )
                  )
             )
          )
         (else
-         (send instructions-text-field set-value "-> Ruta inexistente")
+         (send TextFieldInstrucciones set-value "-> Esta ruta no existe")
          )
 
         )
@@ -1353,56 +1288,49 @@
 
 ;Funcion que sera llamada al presionar "Nueva Busqueda"
 ;"Reiniciara" la aplicacion
-(define (end-search)
+(define (end)
   ;Re-draws
   (showGrid)
-  (draw-all-lines)
-  (draw-all-nodes)
-  (draw-all-weights)
+  (dibujarLineas)
+  (dibujarNodos)
+  (dibujarPesos)
   ;Redefinicion de instruction-text-field
-  (send instructions-text-field set-value "                                  ¡Bienvenido a WazeTico!\n
--> Agregue nuevas ciudades y caminos en el mapa.
--> Busque rutas entre ciudades según su escogencia.")
+  (send TextFieldInstrucciones set-value "                                  ¡Bienvenido a Wazitico!\n
+-> Agregar nuevas ciudades y caminos.
+-> Buscar rutas entre ciudades.")
   ;Borra las selecciones de los destinos en text-fields
-  (send initial-text-field set-value "")
-  (send final-text-field set-value "")
+  (send textFieldInicial set-value "")
+  (send textFieldFinal set-value "")
   ;Redefinicion de information-text-field
-  (send information-text-field set-value "Información de Rutas:" )
+  (send textFieldInfo set-value "Información de Rutas:" )
   ;Elimina los botones de las rutas
-  (delete-actual-buttons botones)
+  (deleteButtons botones)
   ;Habilita botones
-  (send add-city-button enable #t)
-  (send add-road-button enable #t)
-  (send search-button enable #t)
-  (send rbuttons enable #t)
+  (send botonAgregarCiudad enable #t)
+  (send botonAgregarCamino enable #t)
+  (send botonBuscar enable #t)
+  (send botonRutas enable #t)
   ;Deshabilita el boton de finalizar la busqueda
-  (send end-search-button enable #f)
+  (send botonFinalizar enable #f)
   )
 
 
-;---------------------------------------Busqueda de Rutas---------------------------------------;
 
 
 
 
 
-;--------------------------------------------Widgets--------------------------------------------;
 
-
-
-
-
-;========================================Pantalla Inicial========================================;
 
 
 ;Frame inicial
-(define initial-frame (new frame% [label "WazeTico"]
-                   [width 400]
+(define initial-frame (new frame% [label "Wazitico"]
+                   [width 100]
                    [height 200]
                    [alignment '(center center)]))
 
 ;Panel vertical
-;Incluye title y hpanel-initial
+;Incluye titulo y panelr vertical de info
 (define vpanel-initial (new vertical-panel% [parent initial-frame]
                             [alignment '(center center)]))
 
@@ -1424,14 +1352,14 @@
 
 ;Boton Iniciar
 (define initial-initialize-buton (new button% [parent hpanel-initial]
-             [label "Iniciar"]
+             [label "Ingresar"]
              [vert-margin 10]	 
              [horiz-margin 5]
              [callback (lambda (button event)
                          ;Cierra la ventana inicial
                          (send initial-frame show #f)
                          ;Abre la ventana principal
-                         (send main-frame show #t)
+                         (send framePrincipal show #t)
 
                          ; Wait a second to let the window get ready
                          (sleep/yield 1)
@@ -1440,33 +1368,29 @@
                          )]))
 
 
-;========================================Pantalla Inicial========================================;
 
 
 
-
-
-;=======================================Pantalla Principal=======================================;
 
 
 ; Frame principal
-(define main-frame (new frame% [label "WazeTico"]
-                   [width 1050]
-                   [height 660]
+(define framePrincipal (new frame% [label "WazeTico"]
+                   [width 1500]
+                   [height 800]
                    [alignment '(left top)]))
 
 
 ;Panel principal (horizontal)
-(define main-panel (new horizontal-panel% [parent main-frame] ))
+(define panelPrincipal (new horizontal-panel% [parent framePrincipal] ))
  
 
 ;Panel vertical
 ;Incluye cavas(mapa) y panel horizontal secundario
-(define vpanel (new vertical-panel% [parent main-panel]))
+(define vpanel (new vertical-panel% [parent panelPrincipal]))
 
 
 ;Canvas donde se muestra el grafo
-(define map-canvas (new canvas% [parent vpanel]
+(define canvasMapa (new canvas% [parent vpanel]
                        [style '(border)]
                        [label "MAP"] 
                        [vert-margin 10]	 
@@ -1477,22 +1401,22 @@
 
 
 ;Drawing Context de map-canvas
-(define dc (send map-canvas get-dc))
+(define dc (send canvasMapa get-dc))
 
 
 ;Panel horizontal secundario
 ;Incluye text-field (instrucciones) y vpanel2 (botones)
-(define hpanel2 (new horizontal-panel% [parent vpanel]
+(define panelHor (new horizontal-panel% [parent vpanel]
                      [alignment '(center center)]))
 
 
 ;Text-field de instrucciones
-(define instructions-text-field ( new text-field% [parent hpanel2]
+(define TextFieldInstrucciones ( new text-field% [parent panelHor]
                                     [label #f]
                                     [init-value
-                                     "                                  ¡Bienvenido a WazeTico!\n
--> Cree su propio mapa con ciudades personalizadas.
--> Agregue caminos y distancias entre ellos.
+                                     "                                  ¡Bienvenido a Wazitico!\n
+-> A continuación podrá crear su propia mapa
+-> Utilice los botones agregar ciudad y agregar ruta para formarlo
 -> Presione \"Agregar Ciudad\" para iniciar." ]
                                     [vert-margin 10]	 
                                     [horiz-margin 10]
@@ -1502,23 +1426,23 @@
 
 
 
-;Panel vertical II
+;Panel vertical 
 ;Agregar Ciudades y Caminos
-(define vpanel2 (new vertical-panel% [parent hpanel2]
+(define vpanel2 (new vertical-panel% [parent panelHor]
                      [alignment '(center center)]))
 
 ;Boton Search
-(define add-city-button (new button% [parent vpanel2]
+(define botonAgregarCiudad (new button% [parent vpanel2]
              [label "Agregar Ciudad"]
              [vert-margin 10]	 
              [horiz-margin 5]
              [callback (lambda (button event)
-                         (send add-city-frame show #t)
+                         (send frameCiudad show #t)
                          )]))
 
 ;Boton Agregar Camino
-(define add-road-button (new button% [parent vpanel2]
-             [label "Agregar Camino"]
+(define botonAgregarCamino (new button% [parent vpanel2]
+             [label "Agregar Ruta"]
              [enabled #f]
              [vert-margin 10]	 
              [horiz-margin 5]
@@ -1529,12 +1453,12 @@
 
 ;Panel vertical IV
 ;Destinos
-(define vpanel4 (new vertical-panel% [parent hpanel2]
+(define vpanel4 (new vertical-panel% [parent panelHor]
                      [alignment '(center center)]))
 
 
 ;Text-field de destino inicial
-(define initial-text-field ( new text-field% [parent vpanel4]
+(define textFieldInicial ( new text-field% [parent vpanel4]
                                  [enabled #f]       
                                  [label #f]
                                  [min-width 10]
@@ -1542,11 +1466,11 @@
 
 ;Label de destino Inicial
 (define intial-label (new message% [parent vpanel4]
-                          [label "Destino Inicial"]))
+                          [label "Ciudad Origen"]))
 
 
 ;Text-field de destino final
-(define final-text-field ( new text-field% [parent vpanel4]
+(define textFieldFinal ( new text-field% [parent vpanel4]
                                [enabled #f]       
                                [label #f]
                                [min-width 10]
@@ -1554,18 +1478,18 @@
 
 ;Label de destino Final
 (define final-label (new message% [parent vpanel4]
-                          [label "Destino Final"]))
+                          [label "Ciudad Destino"]))
 
 
 ;Panel vertical V
 ;Busqueda
-(define vpanel5 (new vertical-panel% [parent hpanel2]
+(define vpanel5 (new vertical-panel% [parent panelHor]
                      [alignment '(center center)]
                      ))
 
 
 ;Radio Button Selection
-(define rbuttons (new radio-box% [label ""]
+(define botonRutas (new radio-box% [label ""]
      [enabled #f]                 
      [choices '("Ruta más Corta" "Todas las Rutas")]
      [parent vpanel5]
@@ -1573,34 +1497,34 @@
      
 
 ;Boton Search
-(define search-button (new button% [parent vpanel5]
+(define botonBuscar (new button% [parent vpanel5]
              [label "Buscar"]
              [enabled #f]
              [callback (lambda (button event)
                          ;Ingresa el texto de los fields a sus respectivas variables
-                         (set! destinoInicio (send initial-text-field get-value))
-                         (set! destinoFin (send final-text-field get-value))
-                         (set! rutaSeleccion (send rbuttons get-selection) )
+                         (set! destinoInicio (send textFieldInicial get-value))
+                         (set! destinoFin (send textFieldFinal get-value))
+                         (set! rutaSeleccion (send botonRutas get-selection) )
                          ;Comienza el proceso de busqueda
-                         (begin-search)
+                         (buscar)
                          )]))
 
 
 ;Boton New Path
-(define end-search-button (new button% [parent vpanel5]
+(define botonFinalizar (new button% [parent vpanel5]
              [label "Finalizar"]
              [enabled #f]
              [vert-margin 10]	 
              [horiz-margin 5]
              [callback (lambda (button event)
-                         (end-search)
+                         (end)
                          )]))
 
 
 ;Text-field de informacion
-(define information-text-field ( new text-field% [parent main-panel]
+(define textFieldInfo ( new text-field% [parent panelPrincipal]
                                     [label #f]
-                                    [init-value "Información de Rutas:"]
+                                    [init-value "Información:"]
                                     [vert-margin 10]	 
                                     [horiz-margin 10]
                                     [min-width 160]
@@ -1609,87 +1533,80 @@
 
 ;Panel vertical de botones principal
 ;
-(define vpanel-buttons (new vertical-panel% [parent main-panel]
+(define vpanel-buttons (new vertical-panel% [parent panelPrincipal]
                             [horiz-margin 8]
                      [alignment '(center center)]
                      ))
 
 ;Panel vertical de botones secundario
 ;
-(define vpanel-buttons2 (new vertical-panel% [parent main-panel]
+(define vpanel-buttons2 (new vertical-panel% [parent panelPrincipal]
                              	;[enabled #f]
                              [horiz-margin 3]
                      [alignment '(center center)] ))                   
 
 
-;=======================================Pantalla Principal=======================================;
 
-
-
-
-
-;====================================Window de Agregar Ciudad====================================;
 
 
 ;Frame de Agregar Ciudad
-(define add-city-frame (new frame% [label "Agregar Ciudad"]
+(define frameCiudad (new frame% [label "Agregar Ciudad"]
                    [width 140]
                    [height 180]
                    [alignment '(center center)]))
 
 ;Panel vertical city
 ;Agregar Ciudad
-(define vpanel-city (new vertical-panel% [parent add-city-frame]
+(define panelCiudad (new vertical-panel% [parent frameCiudad]
                      [alignment '(center center)]))
 
 
 ;Text-field de agregar ciudad
-(define add-city-text-field ( new text-field% [parent vpanel-city]
+(define agregarCiudadText ( new text-field% [parent panelCiudad]
                                     [label #f]
                                     [min-width 10]))
 
 
 ;Label de agregar ciudad
-(define add-city-label (new message% [parent vpanel-city]
+(define add-city-label (new message% [parent panelCiudad]
                           [label "Nuevo Nodo"]))
 
 
 ;Text-field de agregar ciudad
-(define add-city-x-text-field ( new text-field% [parent vpanel-city]
+(define agregarCiudadX ( new text-field% [parent panelCiudad]
                                     [label #f]
                                     [min-width 10] ))
 
 
 ;Label de agregar ciudad
-(define add-city-x-label (new message% [parent vpanel-city]
+(define labelCiudadX (new message% [parent panelCiudad]
                           [label "Posición en x"]))
 
 ;Text-field de agregar ciudad
-(define add-city-y-text-field ( new text-field% [parent vpanel-city]
+(define agregarCiudadY ( new text-field% [parent panelCiudad]
                                     [label #f]
                                     [min-width 10] ))
 
 
 ;Label de agregar ciudad
-(define add-city-y-label (new message% [parent vpanel-city]
+(define labelCiudadY (new message% [parent panelCiudad]
                           [label "Posición en y"]))
 
 
 
 ;Boton Search
-(define add-city-window-button (new button% [parent vpanel-city]
+(define agregarCiudadBoton (new button% [parent panelCiudad]
              [label "Agregar Ciudad"]
              [callback (lambda (button event)
-                         (add-city) )]))
-
-
-;====================================Window de Agregar Ciudad====================================;
+                         (agregarCiudad) )]))
 
 
 
 
 
-;====================================Window de Agregar Camino====================================;
+
+
+
 
 
 ;Frame de Agregar Camino
@@ -1706,7 +1623,7 @@
 
 
 ;Text-field de agregar ciudad
-(define add-road-initial-text-field (new text-field% [parent vpanel3]
+(define textFieldAgregarCam (new text-field% [parent vpanel3]
                                     [label #f]
                                     [min-width 10]
                                     ))
@@ -1716,7 +1633,7 @@
                           [label "Ciudad Inicial"]))
 
 ;Text-field de destino Final
-(define add-road-final-text-field ( new text-field% [parent vpanel3]
+(define agregarCaminoFinal ( new text-field% [parent vpanel3]
                                     [label #f]
                                     [min-width 10]
                                     ))
@@ -1726,41 +1643,27 @@
                           [label "Ciudad Final"]))
 
 ;Text-field de peso
-(define add-road-weight-text-field (new text-field% [parent vpanel3]
+(define agregarPesoCamino (new text-field% [parent vpanel3]
                                     [label #f]
                                     [min-width 10]
                                     ))
 
 ;Label de peso
-(define add-road-weight-label (new message% [parent vpanel3]
+(define labelAgregarRuta (new message% [parent vpanel3]
                           [label "Distancia"]))
 
 ;Boton Agregar Camino
-(define add-road-window-button (new button% [parent vpanel3]
+(define botonAgregarRuta (new button% [parent vpanel3]
              [label "Agregar Camino"]
              [callback (lambda (button event)
-                         (add-road)
+                         (agregarCamino)
                          )]))
 
 
-;====================================Window de Agregar Camino====================================;
-
-
-
-
-
-;--------------------------------------------Widgets--------------------------------------------;
-
-
-
-
-
-;--------------------------------------Inicio de Aplicacion--------------------------------------;
 
 
 ; Se muestra el frame inicial
 (send initial-frame show #t)
 
 
-;--------------------------------------Inicio de Aplicacion--------------------------------------;
 
