@@ -74,7 +74,7 @@ Esta no puede tener nodos vacíos
   (cond ( (null? lista);Valida si la lista es vacía 
           (list (append lista id))) ;Si es vacía agrega el nodo a la lista
         ( else 
-           (append lista (list id)));En otro caso une la lista actual de coexiones con el nodo deseado 
+           (append lista (list id)));En otro caso une la lista actual de conexiones con el nodo deseado 
  ))
 
 

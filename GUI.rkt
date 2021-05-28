@@ -81,31 +81,19 @@
 
 
 ;Defnicion de los pens con su respectivo color
-(define no-pen (make-object pen% "BLACK" 1 'transparent))
-(define no-brush (make-object brush% "BLACK" 'transparent))
+
 (define one-way-pen (make-object pen% "LIGHTBLUE" 4 'solid))
 (define arrow-pen (make-object pen% "BLACK" 1 'solid))
 (define two-way-pen (make-object pen% "BLUE" 4 'solid))
 (define negro (make-object pen% "BLACK" 2 'solid))
-(define red-pen (make-object pen% "RED" 4 'solid))
-(define weight-pen (make-object pen% "BLACK" 1 'solid))
-(define white-pen (make-object pen% "SNOW" 1 'solid))
+(define red-pen (make-object pen% "RED" 4 'solid))(define white-pen (make-object pen% "SNOW" 1 'solid))
 
 
 ;Brushes
-(define indian-red-brush (make-object brush% "INDIAN RED" 'solid)) ;0
-(define chocolate-brush (make-object brush% "CHOCOLATE" 'solid)) ;1
-(define salmon-brush (make-object brush% "SALMON" 'solid)) ;2
-(define green-brush (make-object brush% "GREEN" 'solid)) ;3
+
 (define yellow-green-brush (make-object brush% "YELLOW GREEN" 'solid)) ;4
-(define aquamarine-brush (make-object brush% "AQUAMARINE" 'solid)) ;5
-(define medium-turquoise-brush (make-object brush% "MEDIUM TURQUOISE" 'solid)) ;6
-(define lightblue-brush (make-object brush% "LIGHTBLUE" 'solid)) ;7
-(define medium-slate-blue-brush (make-object brush% "MEDIUM SLATE BLUE" 'solid)) ;8
-(define plum-brush (make-object brush% "PLUM" 'solid)) ;9
 (define blanco (make-object brush% "WHITE" 'solid))
 (define arrow-brush (make-object brush% "GAINSBORO" 'solid))
-(define black-brush (make-object brush% "BLACK" 'solid))
 (define black-hilite-brush (make-object brush% "BLACK" 'hilite))
 
 
@@ -1335,7 +1323,7 @@
                             [alignment '(center center)]))
 
 
-;---------------------------------------------------------------------------------
+;
 
 ;Dirección de archivo específico en documentos propios
 
@@ -1343,7 +1331,7 @@
          net/url)
 
 
-;---------------------------------------------------------------------------------
+;
 
 ;Panel horizontal
 (define hpanel-initial (new horizontal-panel% [parent vpanel-initial]
@@ -1374,7 +1362,7 @@
 
 
 ; Frame principal
-(define framePrincipal (new frame% [label "WazeTico"]
+(define framePrincipal (new frame% [label "Wazitico"]
                    [width 1500]
                    [height 800]
                    [alignment '(left top)]))
@@ -1396,7 +1384,7 @@
                        [vert-margin 10]	 
                        [horiz-margin 10]
                        [min-height 500]
-                       [min-width 790]
+                       [min-width 800]
                        ))
 
 
@@ -1414,10 +1402,10 @@
 (define TextFieldInstrucciones ( new text-field% [parent panelHor]
                                     [label #f]
                                     [init-value
-                                     "                                  ¡Bienvenido a Wazitico!\n
+                                     "¡Bienvenido a Wazitico!\n
 -> A continuación podrá crear su propia mapa
 -> Utilice los botones agregar ciudad y agregar ruta para formarlo
--> Presione \"Agregar Ciudad\" para iniciar." ]
+-> Inserte una ciudad para empezar" ]
                                     [vert-margin 10]	 
                                     [horiz-margin 10]
                                     [min-width 380]
@@ -1568,7 +1556,7 @@
 
 
 ;Label de agregar ciudad
-(define add-city-label (new message% [parent panelCiudad]
+(define labelAgregarCiudad (new message% [parent panelCiudad]
                           [label "Nuevo Nodo"]))
 
 
