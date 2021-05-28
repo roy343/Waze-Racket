@@ -35,25 +35,10 @@
 
 ;Destino inicial de la ruta
 (define destinoInicio "")
- 
+
 ;Destino final de la ruta
 (define destinoFin "")
 
-#|
-;Utilizado para graficar el grafo preestablecido antes de
-;haber hecho el programa dinamico.
-;Lista de Nodos con coordenadas
-(define nodes-list '(
-        (11 442 279) (12 343 309) (13 510 339) (14 638 378)
-        (21 393 219) (22 432 104) (23 265 40)
-        (31 589 279) (32 687 249)
-        (41 521 169) (42 540 90)
-        (51 88 189) (52 137 70)
-        (61 274 189) (62 736 428)
-        (71 678 159) 
-     )
-  )
-|#
 
 ;Variable de estado de seleccion de rutas
 (define rutaSeleccion -1)
@@ -82,26 +67,18 @@
 
 ;Defnicion de los pens con su respectivo color
 
-(define one-way-pen (make-object pen% "LIGHTBLUE" 4 'solid))
-(define arrow-pen (make-object pen% "BLACK" 1 'solid))
-(define two-way-pen (make-object pen% "BLUE" 4 'solid))
-(define negro (make-object pen% "BLACK" 2 'solid))
+(define penCeleste (make-object pen% "LIGHTBLUE" 4 'solid))
+(define penAzul (make-object pen% "BLUE" 4 'solid))
+(define penNegro (make-object pen% "BLACK" 2 'solid))
 (define red-pen (make-object pen% "RED" 4 'solid))(define white-pen (make-object pen% "SNOW" 1 'solid))
 
 
 ;Brushes
 
-(define yellow-green-brush (make-object brush% "YELLOW GREEN" 'solid)) ;4
+(define brushNodos (make-object brush% "WHITE" 'solid)) ;4
 (define blanco (make-object brush% "WHITE" 'solid))
-(define arrow-brush (make-object brush% "GAINSBORO" 'solid))
-(define black-hilite-brush (make-object brush% "BLACK" 'hilite))
-
-
-;;
-
-
-
-
+(define brushFlechas (make-object brush% "GAINSBORO" 'solid))
+(define negro2 (make-object brush% "BLACK" 'hilite))
 
 
 
@@ -118,7 +95,7 @@
          )
         (else
          (send dc set-pen white-pen)
-         (send dc set-brush black-hilite-brush)
+         (send dc set-brush negro2)
          
          ;Se dibujan las lineas
          (send dc draw-line n 0 n posY)
@@ -444,36 +421,36 @@
 
 ;Funcion para verificar la existencia del camino deseado
 ;Si este existe, se mantiene el camino y se sobreescribe el peso.
-(define (verificarExCamino i-city f-city weight)
-  (verificarExistenciaCamAux i-city f-city weight mapa)
+(define (verificarExCamino ciudadInicio ciudadFinal weight)
+  (verificarExistenciaCamAux ciudadInicio ciudadFinal weight mapa)
   )
 
 ;Funcion auxiliar para verificar la existencia del camino deseado
-(define (verificarExistenciaCamAux i-city f-city weight graph)
+(define (verificarExistenciaCamAux ciudadInicio ciudadFinal weight graph)
 
   (cond ( (null? graph)
           #t
          )
-        ( (equal? i-city (number->string (caar graph)) )
-               (verificarConexiones i-city f-city (cadar graph) )
+        ( (equal? ciudadInicio (number->string (caar graph)) )
+               (verificarConexiones ciudadInicio ciudadFinal (cadar graph) )
          )
         (else
-         (verificarExistenciaCamAux i-city f-city weight (cdr graph))
+         (verificarExistenciaCamAux ciudadInicio ciudadFinal weight (cdr graph))
          )
         )
   )
 
 
 ;Funcion para verificar si existe el camino inverso y si el peso es igual
-(define (verificarInversoCamino i-city f-city weight)
+(define (verificarInversoCamino ciudadInicio ciudadFinal weight)
 
-  (cond ( (equal? #t (and (equal? #t (verificarExCamino i-city f-city weight)) (equal? #t (verificarExCamino f-city i-city weight))))
+  (cond ( (equal? #t (and (equal? #t (verificarExCamino ciudadInicio ciudadFinal weight)) (equal? #t (verificarExCamino ciudadFinal ciudadInicio weight))))
          ;Si no existe ninguno de los dos caminos
           #t
          )
-        ( (equal? #f (verificarExCamino f-city i-city weight))
+        ( (equal? #f (verificarExCamino ciudadFinal ciudadInicio weight))
           ;Si existe el camino inverso, puede verificarse que el peso sea igual
-         (verificarExCaminoInverso i-city f-city weight pesos)
+         (verificarExCaminoInverso ciudadInicio ciudadFinal weight pesos)
          )
         (else
          ;Si no existe el camino inverso, se grafica normal
@@ -483,36 +460,36 @@
   )
   
 ;Funcion auxiliar para verificar si existe el camino inverso y si el peso es igual
-(define (verificarExCaminoInverso i-city f-city weight list)
+(define (verificarExCaminoInverso ciudadInicio ciudadFinal weight list)
   (cond ( (null? list)
           ;Si el peso no es igual
           (send TextFieldInstrucciones set-value
               "-> La distancia deseada debe ser igual a la del camino \n     inverso.\n-> Ingrese la distancia correspondiente." )
           #f
          )
-        ( (equal? #t (and (equal? (string->number f-city) (caar list) )
-                          (equal? (string->number i-city) (cadar list) )
+        ( (equal? #t (and (equal? (string->number ciudadFinal) (caar list) )
+                          (equal? (string->number ciudadInicio) (cadar list) )
                           (equal? (string->number weight) (caddar list) ) ) )
           ;Si el camino inverso existe y el peso es igual
           #t )
         (else
-         (verificarExCaminoInverso i-city f-city weight (cdr list))
+         (verificarExCaminoInverso ciudadInicio ciudadFinal weight (cdr list))
          )))
 
 ;Funcion auxiliar de la auxiliar para verificar la existencia del camino deseado
 ;Esta se encarga de revisar en las conexiones del nodo deseado
-(define (verificarConexiones i-city f-city conections)
+(define (verificarConexiones ciudadInicio ciudadFinal conections)
   (cond ( (null? conections)
           #t
          )
-        ( (equal? f-city (number->string (caar conections)))
+        ( (equal? ciudadFinal (number->string (caar conections)))
           ;Si el camino ya existe
           (send TextFieldInstrucciones set-value
               "-> Este camino  ya existe .\n-> Por favor ingrese uno nuevo." )
           #f
          )
         (else
-         (verificarConexiones i-city f-city (cdr conections))
+         (verificarConexiones ciudadInicio ciudadFinal (cdr conections))
          )))
 
 ;Funcion que guarda el nuevo camino para que su peso pueda ser graficado
@@ -598,34 +575,34 @@
 (define (dibujarCiudad dc node x y)
 
   (cond ( (equal? (quotient node 10) 0)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 1)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 2)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 3)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 4)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 5)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 6)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 7)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 8)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         ( (equal? (quotient node 10) 9)
-          (send dc set-brush yellow-green-brush)
+          (send dc set-brush brushNodos)
          )
         (else
          (send dc set-brush blanco)
@@ -633,7 +610,7 @@
     )
 
   ;Dibuja el nodo (circulo)
-  (send dc set-pen negro)
+  (send dc set-pen penNegro)
   (send dc draw-ellipse (- x 15) (- y 15) 30 30)
 
   ;Muestra el respectivo numero dentro del nodo
@@ -706,11 +683,11 @@
           (dibujarFlechas (+ 0 (getCoord ini "x")) (+ 0 (getCoord ini "y"))
               (+ 0 (getCoord fin "x")) (+ 0 (getCoord fin "y")) )
           ;Cambia al pen para una via
-          (send dc set-pen one-way-pen)
+          (send dc set-pen penCeleste)
          )
         ( (equal? direccion 2)
           ;Cambia al pen para dos vias
-          (send dc set-pen two-way-pen)
+          (send dc set-pen penAzul)
          )
     )
   ;Manda a dibujar la linea
@@ -772,8 +749,8 @@
 
 ;Funcion para dibujar una flecha cerca de la linea
 (define (dibujarFlechas x1 y1 x2 y2)
-  (send dc set-pen arrow-pen)
-  (send dc set-brush arrow-brush)
+  (send dc set-pen penNegro)
+  (send dc set-brush brushFlechas)
 
    (cond ( (equal? #t  (equal? x1 x2) )  ;x1 == x2
           (draw-arrow dc (/ (+ x1 (/ (+ x1 x2) 2)) 2)
@@ -1376,20 +1353,25 @@
 ;Incluye cavas(mapa) y panel horizontal secundario
 (define vpanel (new vertical-panel% [parent panelPrincipal]))
 
+;Boton Search
+(define botonAgregarCiudad (new button% [parent vpanel]
+             [label "Agregar Ciudad"]
+             [vert-margin 10]	 
+             [horiz-margin 5]
+             [callback (lambda (button event)
+                         (send frameCiudad show #t)
+                         )]))
 
-;Canvas donde se muestra el grafo
-(define canvasMapa (new canvas% [parent vpanel]
-                       [style '(border)]
-                       [label "MAP"] 
-                       [vert-margin 10]	 
-                       [horiz-margin 10]
-                       [min-height 500]
-                       [min-width 800]
-                       ))
+;Boton Agregar Camino
+(define botonAgregarCamino (new button% [parent vpanel]
+             [label "Agregar Ruta"]
+             [enabled #f]
+             [vert-margin 10]	 
+             [horiz-margin 5]
+             [callback (lambda (button event)
+                         (send add-road-frame show #t)
+                         )]))
 
-
-;Drawing Context de map-canvas
-(define dc (send canvasMapa get-dc))
 
 
 ;Panel horizontal secundario
@@ -1412,6 +1394,39 @@
                                     [min-height 120]))
 
 
+;Radio Button Selection
+(define botonRutas (new radio-box% [label ""]
+     [enabled #f]                 
+     [choices '("Ruta más Corta" "Todas las Rutas")]
+     [parent vpanel]
+))
+     
+
+;Boton Search
+(define botonBuscar (new button% [parent vpanel]
+             [label "Buscar"]
+             [enabled #f]
+             [callback (lambda (button event)
+                         ;Ingresa el texto de los fields a sus respectivas variables
+                         (set! destinoInicio (send textFieldInicial get-value))
+                         (set! destinoFin (send textFieldFinal get-value))
+                         (set! rutaSeleccion (send botonRutas get-selection) )
+                         ;Comienza el proceso de busqueda
+                         (buscar)
+                         )]))
+
+
+;Boton New Path
+(define botonFinalizar (new button% [parent vpanel]
+             [label "Finalizar"]
+             [enabled #f]
+             [vert-margin 10]	 
+             [horiz-margin 5]
+             [callback (lambda (button event)
+                         (end)
+                         )]))
+
+
 
 
 ;Panel vertical 
@@ -1419,24 +1434,19 @@
 (define vpanel2 (new vertical-panel% [parent panelHor]
                      [alignment '(center center)]))
 
-;Boton Search
-(define botonAgregarCiudad (new button% [parent vpanel2]
-             [label "Agregar Ciudad"]
-             [vert-margin 10]	 
-             [horiz-margin 5]
-             [callback (lambda (button event)
-                         (send frameCiudad show #t)
-                         )]))
+;Canvas donde se muestra el grafo
+(define canvasMapa (new canvas% [parent vpanel2]
+                       [style '(border)]
+                       [label "MAP"] 
+                       [vert-margin 10]	 
+                       [horiz-margin 10]
+                       [min-height 500]
+                       [min-width 800]
+                       ))
 
-;Boton Agregar Camino
-(define botonAgregarCamino (new button% [parent vpanel2]
-             [label "Agregar Ruta"]
-             [enabled #f]
-             [vert-margin 10]	 
-             [horiz-margin 5]
-             [callback (lambda (button event)
-                         (send add-road-frame show #t)
-                         )]))
+
+;Drawing Context de map-canvas
+(define dc (send canvasMapa get-dc))
 
 
 ;Panel vertical IV
@@ -1476,37 +1486,6 @@
                      ))
 
 
-;Radio Button Selection
-(define botonRutas (new radio-box% [label ""]
-     [enabled #f]                 
-     [choices '("Ruta más Corta" "Todas las Rutas")]
-     [parent vpanel5]
-))
-     
-
-;Boton Search
-(define botonBuscar (new button% [parent vpanel5]
-             [label "Buscar"]
-             [enabled #f]
-             [callback (lambda (button event)
-                         ;Ingresa el texto de los fields a sus respectivas variables
-                         (set! destinoInicio (send textFieldInicial get-value))
-                         (set! destinoFin (send textFieldFinal get-value))
-                         (set! rutaSeleccion (send botonRutas get-selection) )
-                         ;Comienza el proceso de busqueda
-                         (buscar)
-                         )]))
-
-
-;Boton New Path
-(define botonFinalizar (new button% [parent vpanel5]
-             [label "Finalizar"]
-             [enabled #f]
-             [vert-margin 10]	 
-             [horiz-margin 5]
-             [callback (lambda (button event)
-                         (end)
-                         )]))
 
 
 ;Text-field de informacion
@@ -1654,4 +1633,18 @@
 (send initial-frame show #t)
 
 
-
+#|
+;Utilizado para graficar el grafo preestablecido antes de
+;haber hecho el programa dinamico.
+;Lista de Nodos con coordenadas
+(define nodes-list '(
+        (11 442 279) (12 343 309) (13 510 339) (14 638 378)
+        (21 393 219) (22 432 104) (23 265 40)
+        (31 589 279) (32 687 249)
+        (41 521 169) (42 540 90)
+        (51 88 189) (52 137 70)
+        (61 274 189) (62 736 428)
+        (71 678 159) 
+     )
+  )
+|#
